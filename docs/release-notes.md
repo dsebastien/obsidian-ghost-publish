@@ -1,5 +1,7 @@
-# Release notes
+# Release Notes
 
-## Unreleased
+## 0.1.0 (2026-05-19)
 
-- Initial generic Ghost publishing plugin with configurable presets.
+### Features
+
+- **plugin:** implement Ghost Publish with configurable presets
