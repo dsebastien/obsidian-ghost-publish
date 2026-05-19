@@ -1,0 +1,325 @@
+@import 'tailwindcss';
+
+/* ========================================
+   SHARED
+   ======================================== */
+
+.support-header-margin {
+    @apply mb-5;
+}
+
+.gp-hint {
+    @apply text-xs italic mt-1 mb-2;
+    color: var(--text-muted);
+}
+
+.gp-textarea {
+    @apply w-full text-xs;
+    font-family: var(--font-monospace);
+}
+
+.gp-modal-footer {
+    @apply flex justify-end gap-2 mt-4;
+}
+
+/* ========================================
+   PANEL — VIEW
+   ======================================== */
+
+.ghost-publish-view {
+    @apply flex flex-col h-full p-2;
+}
+
+.gp-view-header {
+    @apply flex flex-col gap-2 mb-3;
+}
+
+.gp-title-row {
+    @apply flex items-center justify-between;
+}
+
+.gp-title {
+    @apply text-base font-medium;
+    color: var(--text-normal);
+}
+
+.gp-refresh-btn {
+    @apply cursor-pointer;
+}
+
+.gp-tabs {
+    @apply flex flex-wrap gap-1;
+}
+
+.gp-preset-tabs .gp-tab {
+    @apply text-sm;
+}
+
+.gp-tab {
+    @apply px-3 py-1.5 cursor-pointer text-sm;
+    background-color: var(--background-secondary);
+    color: var(--text-muted);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--radius-s);
+}
+
+.gp-tab:hover {
+    background-color: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.gp-tab-active.gp-tab-active {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+
+.gp-sub-tabs {
+    @apply gap-0.5;
+}
+
+.gp-sub-tab {
+    @apply px-2 py-1 cursor-pointer text-xs;
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+}
+
+.gp-sub-tab:hover {
+    color: var(--text-normal);
+}
+
+.gp-sub-tab-active.gp-sub-tab-active {
+    color: var(--text-accent);
+    border-bottom-color: var(--text-accent);
+}
+
+.gp-view-content {
+    @apply flex-1 flex flex-col gap-3 overflow-y-auto;
+}
+
+/* ========================================
+   PANEL — TRIAGE / QUEUE / RECENT
+   ======================================== */
+
+.gp-filter-bar {
+    @apply flex items-center gap-2 mb-2;
+}
+
+.gp-filter-label {
+    @apply text-sm;
+    color: var(--text-muted);
+}
+
+.gp-range-select {
+    @apply text-sm;
+}
+
+.gp-summary-bar {
+    @apply flex items-center justify-between gap-2 mb-2;
+}
+
+.gp-summary {
+    @apply text-sm;
+    color: var(--text-muted);
+}
+
+.gp-empty {
+    @apply text-sm italic p-3;
+    color: var(--text-muted);
+    background-color: var(--background-secondary);
+    border-radius: var(--radius-s);
+}
+
+.gp-card-list {
+    @apply flex flex-col gap-2;
+}
+
+.gp-card {
+    @apply flex flex-col gap-1.5 p-2.5;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--radius-s);
+}
+
+.gp-card-header {
+    @apply flex items-start justify-between gap-2;
+}
+
+.gp-card-title {
+    @apply text-sm font-medium cursor-pointer;
+    color: var(--text-normal);
+}
+
+.gp-card-title:hover {
+    color: var(--text-accent);
+    text-decoration: underline;
+}
+
+.gp-card-meta {
+    @apply flex flex-wrap items-center gap-x-2 text-xs;
+    color: var(--text-muted);
+}
+
+.gp-card-date {
+    @apply font-medium;
+}
+
+.gp-card-path {
+    @apply italic opacity-80 truncate;
+}
+
+.gp-card-badges {
+    @apply flex flex-wrap gap-1.5;
+}
+
+.gp-badge {
+    @apply text-xs px-1.5 py-0.5;
+    border-radius: var(--radius-s);
+    background-color: var(--background-modifier-hover);
+    color: var(--text-muted);
+}
+
+.gp-badge-synced {
+    background-color: var(--background-modifier-hover);
+    color: var(--text-accent);
+}
+
+.gp-badge-new {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.gp-badge-email {
+    background-color: var(--background-modifier-hover);
+    color: var(--text-success, var(--text-accent));
+}
+
+.gp-card-actions {
+    @apply flex flex-wrap gap-2;
+}
+
+.gp-card-actions button {
+    @apply text-xs px-2 py-1 cursor-pointer;
+}
+
+/* ========================================
+   PANEL — EMPTY STATE
+   ======================================== */
+
+.gp-empty-state {
+    @apply flex flex-col items-center text-center gap-2.5 p-6;
+}
+
+.gp-empty-icon {
+    @apply flex items-center justify-center;
+    color: var(--text-muted);
+    width: 48px;
+    height: 48px;
+}
+
+.gp-empty-icon svg {
+    width: 32px;
+    height: 32px;
+}
+
+.gp-empty-headline {
+    @apply text-lg font-semibold m-0;
+    color: var(--text-normal);
+}
+
+.gp-empty-body {
+    @apply text-sm m-0;
+    color: var(--text-muted);
+    max-width: 28rem;
+}
+
+.gp-empty-cta {
+    @apply mt-2 cursor-pointer;
+}
+
+/* ========================================
+   SETTINGS — PRESETS LIST
+   ======================================== */
+
+.gp-preset-list {
+    @apply flex flex-col gap-2 mb-3;
+}
+
+.gp-preset-row {
+    @apply flex items-center gap-2 p-2;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--radius-s);
+}
+
+.gp-preset-main {
+    @apply flex-1 flex flex-col;
+}
+
+.gp-preset-name {
+    @apply text-sm font-medium;
+    color: var(--text-normal);
+}
+
+.gp-preset-summary {
+    @apply text-xs;
+    color: var(--text-muted);
+}
+
+.gp-preset-actions {
+    @apply flex items-center gap-1;
+}
+
+.gp-preset-actions button {
+    @apply text-xs px-2 py-1 cursor-pointer;
+}
+
+/* ========================================
+   SETTINGS — PRESET EDITOR MODAL
+   ======================================== */
+
+.gp-preset-editor .gp-tag-list {
+    @apply flex flex-col gap-1.5 mb-2;
+}
+
+.gp-tag-row {
+    @apply flex items-center gap-2 p-1.5;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--radius-s);
+}
+
+.gp-tag-name {
+    @apply flex-1 text-sm;
+    color: var(--text-normal);
+}
+
+.gp-tag-visibility {
+    @apply text-xs;
+}
+
+.gp-tag-remove {
+    color: var(--text-error);
+}
+
+.gp-tag-add {
+    @apply flex items-center gap-2;
+}
+
+.gp-tag-input {
+    @apply flex-1 text-sm;
+}
+
+/* Tag autocomplete dropdown entries */
+.gp-suggest-primary {
+    @apply text-sm;
+    color: var(--text-normal);
+}
+
+.gp-suggest-secondary {
+    @apply text-xs;
+    color: var(--text-muted);
+}
