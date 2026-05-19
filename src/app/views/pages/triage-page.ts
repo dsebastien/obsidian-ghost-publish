@@ -3,10 +3,12 @@ import type { App } from 'obsidian'
 import type { GhostPublishPlugin } from '../../plugin'
 import type { Preset } from '../../types/preset.intf'
 import { TRIAGE_RANGES } from '../../types/news-candidate.intf'
-import type { TriageRangeId } from '../../types/news-candidate.intf'
+import type { PublicationCandidate, TriageRangeId } from '../../types/news-candidate.intf'
 import { findCandidates } from '../../services/candidate-discovery'
 import { applyTriageAction } from '../../services/triage-actions'
+import type { TriageAction } from '../../services/triage-actions'
 import { NOTICE_TIMEOUT_MS } from '../../constants'
+import { animateCardRemoval } from './card-animations'
 import { log } from '../../../utils/log'
 
 export function renderTriagePage(
@@ -15,8 +17,7 @@ export function renderTriagePage(
     plugin: GhostPublishPlugin,
     preset: Preset,
     range: TriageRangeId,
-    onRangeChange: (range: TriageRangeId) => void,
-    onRefresh: () => void
+    onRangeChange: (range: TriageRangeId) => void
 ): void {
     const filters = container.createDiv({ cls: 'gp-filter-bar' })
     filters.createSpan({ text: 'Range:', cls: 'gp-filter-label' })
@@ -32,16 +33,47 @@ export function renderTriagePage(
     const candidates = findCandidates(app, plugin.settings, range)
 
     const summary = container.createDiv({ cls: 'gp-summary' })
-    summary.setText(
-        candidates.length === 0
-            ? 'No candidates in this range.'
-            : `${candidates.length} candidate${candidates.length === 1 ? '' : 's'} in this range.`
-    )
+    let visibleCount = candidates.length
+    const renderSummary = (): void => {
+        summary.setText(
+            visibleCount === 0
+                ? 'No candidates in this range.'
+                : `${visibleCount} candidate${visibleCount === 1 ? '' : 's'} in this range.`
+        )
+    }
+    renderSummary()
 
-    if (candidates.length === 0) return
+    if (visibleCount === 0) return
 
     const list = container.createDiv({ cls: 'gp-card-list' })
     const showEmailButton = preset.newsletterSlug.trim().length > 0
+
+    const handleAction = (
+        card: HTMLElement,
+        candidate: PublicationCandidate,
+        action: TriageAction,
+        successMessage: string
+    ): void => {
+        void (async () => {
+            try {
+                await applyTriageAction(
+                    app,
+                    candidate.file,
+                    plugin.settings.frontmatter,
+                    preset.id,
+                    action
+                )
+                new Notice(successMessage, NOTICE_TIMEOUT_MS)
+                animateCardRemoval(card, () => {
+                    visibleCount = Math.max(0, visibleCount - 1)
+                    renderSummary()
+                })
+            } catch (e) {
+                log(`Triage ${action} failed`, 'error', e)
+                new Notice('Failed to apply triage action.', NOTICE_TIMEOUT_MS)
+            }
+        })()
+    }
 
     for (const candidate of candidates) {
         const card = list.createDiv({ cls: 'gp-card' })
@@ -70,25 +102,12 @@ export function renderTriagePage(
             cls: 'mod-cta'
         })
         publishBtn.addEventListener('click', () => {
-            void (async () => {
-                try {
-                    await applyTriageAction(
-                        app,
-                        candidate.file,
-                        plugin.settings.frontmatter,
-                        preset.id,
-                        'publish'
-                    )
-                    new Notice(
-                        `Queued for ${preset.name}: ${candidate.file.basename}`,
-                        NOTICE_TIMEOUT_MS
-                    )
-                    onRefresh()
-                } catch (e) {
-                    log('Triage publish failed', 'error', e)
-                    new Notice('Failed to apply triage action.', NOTICE_TIMEOUT_MS)
-                }
-            })()
+            handleAction(
+                card,
+                candidate,
+                'publish',
+                `Queued for ${preset.name}: ${candidate.file.basename}`
+            )
         })
 
         if (showEmailButton) {
@@ -97,46 +116,18 @@ export function renderTriagePage(
                 cls: 'mod-cta'
             })
             emailBtn.addEventListener('click', () => {
-                void (async () => {
-                    try {
-                        await applyTriageAction(
-                            app,
-                            candidate.file,
-                            plugin.settings.frontmatter,
-                            preset.id,
-                            'publish_email'
-                        )
-                        new Notice(
-                            `Queued + email opt-in: ${candidate.file.basename}`,
-                            NOTICE_TIMEOUT_MS
-                        )
-                        onRefresh()
-                    } catch (e) {
-                        log('Triage publish+email failed', 'error', e)
-                        new Notice('Failed to apply triage action.', NOTICE_TIMEOUT_MS)
-                    }
-                })()
+                handleAction(
+                    card,
+                    candidate,
+                    'publish_email',
+                    `Queued + email opt-in: ${candidate.file.basename}`
+                )
             })
         }
 
         const ignoreBtn = actions.createEl('button', { text: 'Ignore', cls: 'mod-muted' })
         ignoreBtn.addEventListener('click', () => {
-            void (async () => {
-                try {
-                    await applyTriageAction(
-                        app,
-                        candidate.file,
-                        plugin.settings.frontmatter,
-                        preset.id,
-                        'ignore'
-                    )
-                    new Notice(`Ignored: ${candidate.file.basename}`, NOTICE_TIMEOUT_MS)
-                    onRefresh()
-                } catch (e) {
-                    log('Triage ignore failed', 'error', e)
-                    new Notice('Failed to apply triage action.', NOTICE_TIMEOUT_MS)
-                }
-            })()
+            handleAction(card, candidate, 'ignore', `Ignored: ${candidate.file.basename}`)
         })
     }
 }

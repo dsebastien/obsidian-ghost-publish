@@ -5,6 +5,7 @@ import type { Preset } from '../../types/preset.intf'
 import { findQueuedNotesForPreset } from '../../services/candidate-discovery'
 import { removeFromQueue } from '../../services/triage-actions'
 import { NOTICE_TIMEOUT_MS } from '../../constants'
+import { animateCardRemoval } from './card-animations'
 import { log } from '../../../utils/log'
 
 export function renderQueuePage(
@@ -17,16 +18,21 @@ export function renderQueuePage(
     const queue = findQueuedNotesForPreset(app, plugin.settings, preset.id)
 
     const headerBar = container.createDiv({ cls: 'gp-summary-bar' })
-    headerBar.createSpan({
-        text: `${queue.length} note${queue.length === 1 ? '' : 's'} queued`,
+    const summaryEl = headerBar.createSpan({
+        text: '',
         cls: 'gp-summary'
     })
+    let visibleCount = queue.length
+    const renderSummary = (): void => {
+        summaryEl.setText(`${visibleCount} note${visibleCount === 1 ? '' : 's'} queued`)
+    }
+    renderSummary()
 
     const syncBtn = headerBar.createEl('button', {
         text: 'Sync to Ghost',
         cls: 'mod-cta'
     })
-    if (queue.length === 0) syncBtn.disabled = true
+    if (visibleCount === 0) syncBtn.disabled = true
     syncBtn.addEventListener('click', () => {
         void (async () => {
             syncBtn.disabled = true
@@ -44,7 +50,7 @@ export function renderQueuePage(
         })()
     })
 
-    if (queue.length === 0) {
+    if (visibleCount === 0) {
         container.createEl('p', {
             text: `No notes are currently queued under "${preset.name}".`,
             cls: 'gp-empty'
@@ -93,7 +99,13 @@ export function renderQueuePage(
                 try {
                     await removeFromQueue(app, item.file, plugin.settings.frontmatter)
                     new Notice(`Removed from queue: ${item.file.basename}`, NOTICE_TIMEOUT_MS)
-                    onRefresh()
+                    animateCardRemoval(card, () => {
+                        visibleCount = Math.max(0, visibleCount - 1)
+                        renderSummary()
+                        if (visibleCount === 0) {
+                            syncBtn.disabled = true
+                        }
+                    })
                 } catch (e) {
                     log('Remove from queue failed', 'error', e)
                     new Notice('Failed to remove note from queue.', NOTICE_TIMEOUT_MS)

@@ -72,6 +72,9 @@ export class GhostPublishView extends ItemView {
 
     private render(): void {
         const { contentEl } = this
+        // Preserve scroll position across full re-renders so the manual
+        // refresh + sync buttons don't snap the user back to the top.
+        const prevScroll = this.snapshotScroll()
         contentEl.empty()
         contentEl.addClass('ghost-publish-view')
 
@@ -150,8 +153,7 @@ export class GhostPublishView extends ItemView {
                     this.plugin,
                     activePreset,
                     this.state.triageRange,
-                    (range) => this.setTriageRange(range),
-                    () => this.refresh()
+                    (range) => this.setTriageRange(range)
                 )
                 break
             case 'queue':
@@ -161,6 +163,8 @@ export class GhostPublishView extends ItemView {
                 renderRecentlyPublishedPage(content, this.app, this.plugin, activePreset)
                 break
         }
+
+        this.restoreScroll(prevScroll)
     }
 
     private missingGlobalConfig(): string[] {
@@ -169,5 +173,18 @@ export class GhostPublishView extends ItemView {
         if (!s.ghostUrl.trim()) missing.push('Ghost URL')
         if (!resolveAdminKey(s)) missing.push('Admin API key')
         return missing
+    }
+
+    private snapshotScroll(): number | null {
+        const content = this.contentEl.querySelector('.gp-view-content')
+        if (!(content instanceof HTMLElement)) return null
+        return content.scrollTop
+    }
+
+    private restoreScroll(scrollTop: number | null): void {
+        if (scrollTop === null) return
+        const content = this.contentEl.querySelector('.gp-view-content')
+        if (!(content instanceof HTMLElement)) return
+        content.scrollTop = scrollTop
     }
 }

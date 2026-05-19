@@ -142,6 +142,24 @@
     background-color: var(--background-secondary);
     border: 1px solid var(--background-modifier-border);
     border-radius: var(--radius-s);
+    overflow: hidden;
+    transition:
+        opacity 180ms ease,
+        max-height 220ms ease,
+        padding 220ms ease,
+        margin 220ms ease,
+        border-width 220ms ease;
+}
+
+/* Doubled-class selector to bump specificity above .gp-card without using !important. */
+.gp-card-removing.gp-card-removing {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    pointer-events: none;
 }
 
 .gp-card-header {
