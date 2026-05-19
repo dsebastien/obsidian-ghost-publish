@@ -72,7 +72,7 @@ export async function publishAllForPreset(
     if (preset.listingNoteEnabled && preset.listingNotePath.trim()) {
         try {
             const refreshed = findQueuedNotesForPreset(app, settings, preset.id)
-            await regenerateListingNote(app, preset, refreshed)
+            await regenerateListingNote(app, preset, refreshed, settings.frontmatter)
         } catch (e) {
             log('Listing note regeneration failed', 'error', e)
         }
