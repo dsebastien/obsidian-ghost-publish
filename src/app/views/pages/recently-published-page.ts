@@ -1,6 +1,7 @@
 import type { App } from 'obsidian'
 import type { GhostPublishPlugin } from '../../plugin'
 import type { Preset } from '../../types/preset.intf'
+import { openNoteLink } from './open-note-link'
 
 interface PublishedItem {
     path: string
@@ -52,10 +53,9 @@ export function renderRecentlyPublishedPage(
 
         const header = card.createDiv({ cls: 'gp-card-header' })
         const titleEl = header.createEl('a', { text: item.title, cls: 'gp-card-title' })
-        titleEl.addEventListener('click', (ev) => {
-            ev.preventDefault()
-            void app.workspace.openLinkText(item.path, item.path, true)
-        })
+        const openTitle = (ev: MouseEvent): void => openNoteLink(app, item.path, ev)
+        titleEl.addEventListener('click', openTitle)
+        titleEl.addEventListener('auxclick', openTitle)
 
         const meta = card.createDiv({ cls: 'gp-card-meta' })
         meta.createSpan({

@@ -35,6 +35,14 @@ A preset is a reusable publication profile:
 
 Presets are reorderable; reorder them in settings to control the panel tab order.
 
+## Opening notes from the panel
+
+Every note title across the three sub-tabs (Triage / Queue / Recently published) behaves like a standard Obsidian wikilink:
+
+- **Click** — opens the note in the current tab.
+- **Ctrl/Cmd + click** — opens the note in a new tab.
+- **Middle click** — opens the note in a new tab.
+
 ## Triage
 
 The Triage sub-tab lists notes that:

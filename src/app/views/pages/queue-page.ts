@@ -6,6 +6,7 @@ import { findQueuedNotesForPreset } from '../../services/candidate-discovery'
 import { removeFromQueue } from '../../services/triage-actions'
 import { NOTICE_TIMEOUT_MS } from '../../constants'
 import { animateCardRemoval } from './card-animations'
+import { openNoteLink } from './open-note-link'
 import { log } from '../../../utils/log'
 
 export function renderQueuePage(
@@ -97,10 +98,9 @@ export function renderQueuePage(
             text: item.file.basename,
             cls: 'gp-card-title'
         })
-        titleEl.addEventListener('click', (ev) => {
-            ev.preventDefault()
-            void app.workspace.openLinkText(item.file.path, item.file.path, true)
-        })
+        const openTitle = (ev: MouseEvent): void => openNoteLink(app, item.file.path, ev)
+        titleEl.addEventListener('click', openTitle)
+        titleEl.addEventListener('auxclick', openTitle)
 
         const meta = card.createDiv({ cls: 'gp-card-meta' })
         meta.createSpan({
