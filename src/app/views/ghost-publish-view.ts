@@ -58,6 +58,11 @@ export class GhostPublishView extends ItemView {
         this.render()
     }
 
+    setQueueHideSynced(hide: boolean): void {
+        this.state = { ...this.state, queueHideSynced: hide }
+        this.render()
+    }
+
     refresh(): void {
         this.render()
     }
@@ -157,7 +162,15 @@ export class GhostPublishView extends ItemView {
                 )
                 break
             case 'queue':
-                renderQueuePage(content, this.app, this.plugin, activePreset, () => this.refresh())
+                renderQueuePage(
+                    content,
+                    this.app,
+                    this.plugin,
+                    activePreset,
+                    this.state.queueHideSynced,
+                    (hide) => this.setQueueHideSynced(hide),
+                    () => this.refresh()
+                )
                 break
             case 'recent':
                 renderRecentlyPublishedPage(content, this.app, this.plugin, activePreset)

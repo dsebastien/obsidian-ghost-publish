@@ -50,6 +50,7 @@ This document defines the core business rules. These MUST be respected unless ex
 - **BR-UI-4**: Single-card destructive actions (publish / publish+email / ignore on triage; remove-from-queue on queue) use surgical in-place removal via `animateCardRemoval` — no full re-render. Reason: full re-renders destroy scroll position when many cards are in the list.
 - **BR-UI-5**: Full re-renders snapshot `scrollTop` on `.gp-view-content` before `contentEl.empty()` and restore it once the new content is in place. Reason: the manual refresh button and the queue's Sync button still trigger full re-renders; scroll preservation prevents jarring snap-to-top.
 - **BR-UI-6**: After a sync completes, the panel refreshes twice — immediately for responsiveness, and again after `POST_SYNC_REFRESH_DELAY_MS` (500 ms). Reason: `app.fileManager.processFrontMatter` resolves before the corresponding `metadataCache` 'changed' events fire, so the immediate refresh would query stale frontmatter and show pre-sync badges + timestamps.
+- **BR-UI-7**: The Queue tab's "Show synced notes" toggle filters only the rendered list. The Sync button must always operate on the full queue (synced + new), independent of the filter. Reason: re-syncing a synced note is a cheap no-op (content-hash short-circuits to `unchanged`), so excluding them from sync would only complicate the mental model.
 
 ## Defaults
 

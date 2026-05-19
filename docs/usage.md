@@ -57,6 +57,8 @@ For each candidate, three actions:
 
 The Queue sub-tab lists every note already flagged for the active preset. Each card shows a **Synced** / **New** badge and an optional **Newsletter** badge. **Sync to Ghost** at the top runs the full pipeline for every note in this preset's queue.
 
+By default, notes that already have a Ghost id (the **Synced** badge) are **hidden** so the queue reads as a punch-list of what's left to push. Toggle **Show synced notes** in the filter bar to reveal them. The toggle only affects what's rendered — **Sync to Ghost** always operates on every queued note, regardless of the filter.
+
 You can remove a note from the queue without affecting the post on Ghost (the post stays live; the plugin just stops tracking it).
 
 Sync completion takes about half a second to reflect in the queue (badges flip from **New** to **Synced**, timestamps update). The slight delay is intentional — it lets Obsidian's metadata cache catch up to the frontmatter writes the sync just made.

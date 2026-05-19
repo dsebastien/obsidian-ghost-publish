@@ -131,6 +131,19 @@
     @apply text-sm;
 }
 
+.gp-toggle-label {
+    @apply flex items-center gap-1.5 text-xs cursor-pointer select-none;
+    color: var(--text-muted);
+}
+
+.gp-toggle-label:hover {
+    color: var(--text-normal);
+}
+
+.gp-toggle-label input[type='checkbox'] {
+    @apply cursor-pointer;
+}
+
 .gp-summary-bar {
     @apply flex items-center justify-between gap-2 mb-2;
 }

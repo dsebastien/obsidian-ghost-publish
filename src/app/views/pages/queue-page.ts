@@ -13,18 +13,25 @@ export function renderQueuePage(
     app: App,
     plugin: GhostPublishPlugin,
     preset: Preset,
+    hideSynced: boolean,
+    onHideSyncedChange: (hide: boolean) => void,
     onRefresh: () => void
 ): void {
-    const queue = findQueuedNotesForPreset(app, plugin.settings, preset.id)
+    // The full queue drives the Sync button (and the synced count); the
+    // visible subset drives what gets rendered as cards.
+    const fullQueue = findQueuedNotesForPreset(app, plugin.settings, preset.id)
+    const syncedCount = fullQueue.filter((q) => q.hasGhostId).length
+    const visibleQueue = hideSynced ? fullQueue.filter((q) => !q.hasGhostId) : fullQueue
 
     const headerBar = container.createDiv({ cls: 'gp-summary-bar' })
-    const summaryEl = headerBar.createSpan({
-        text: '',
-        cls: 'gp-summary'
-    })
-    let visibleCount = queue.length
+    const summaryEl = headerBar.createSpan({ cls: 'gp-summary' })
+    let visibleCount = visibleQueue.length
     const renderSummary = (): void => {
-        summaryEl.setText(`${visibleCount} note${visibleCount === 1 ? '' : 's'} queued`)
+        const visibleLabel = `${visibleCount} note${visibleCount === 1 ? '' : 's'} shown`
+        const hiddenSuffix = hideSynced && syncedCount > 0 ? ` · ${syncedCount} synced hidden` : ''
+        const totalSuffix =
+            !hideSynced && fullQueue.length !== visibleCount ? ` of ${fullQueue.length}` : ''
+        summaryEl.setText(`${visibleLabel}${totalSuffix}${hiddenSuffix}`)
     }
     renderSummary()
 
@@ -32,13 +39,16 @@ export function renderQueuePage(
         text: 'Sync to Ghost',
         cls: 'mod-cta'
     })
-    if (visibleCount === 0) syncBtn.disabled = true
+    if (fullQueue.length === 0) syncBtn.disabled = true
     syncBtn.addEventListener('click', () => {
         void (async () => {
             syncBtn.disabled = true
             const original = syncBtn.textContent ?? 'Sync to Ghost'
             syncBtn.textContent = 'Syncing…'
             try {
+                // The plugin re-queries the full queue server-side, so this
+                // button always syncs every queued note — regardless of the
+                // hide-synced filter applied to the visible list.
                 await plugin.runPublishAllForPreset(preset.id)
             } catch (e) {
                 log('Sync failed', 'error', e)
@@ -50,7 +60,18 @@ export function renderQueuePage(
         })()
     })
 
-    if (visibleCount === 0) {
+    // Inline filter: show / hide already-synced notes in the visible list.
+    // Default is hide (most useful punch-list view: "what's left to push?").
+    const filters = container.createDiv({ cls: 'gp-filter-bar' })
+    const toggleLabel = filters.createEl('label', { cls: 'gp-toggle-label' })
+    const toggleInput = toggleLabel.createEl('input', { attr: { type: 'checkbox' } })
+    toggleInput.checked = !hideSynced
+    toggleLabel.appendText(' Show synced notes')
+    toggleInput.addEventListener('change', () => {
+        onHideSyncedChange(!toggleInput.checked)
+    })
+
+    if (fullQueue.length === 0) {
         container.createEl('p', {
             text: `No notes are currently queued under "${preset.name}".`,
             cls: 'gp-empty'
@@ -58,9 +79,18 @@ export function renderQueuePage(
         return
     }
 
+    if (visibleCount === 0) {
+        // All queued notes are synced AND the filter hides them.
+        container.createEl('p', {
+            text: `Everything's synced. Toggle "Show synced notes" to see ${syncedCount}.`,
+            cls: 'gp-empty'
+        })
+        return
+    }
+
     const list = container.createDiv({ cls: 'gp-card-list' })
 
-    for (const item of queue) {
+    for (const item of visibleQueue) {
         const card = list.createDiv({ cls: 'gp-card' })
         const header = card.createDiv({ cls: 'gp-card-header' })
         const titleEl = header.createEl('a', {
@@ -102,9 +132,10 @@ export function renderQueuePage(
                     animateCardRemoval(card, () => {
                         visibleCount = Math.max(0, visibleCount - 1)
                         renderSummary()
-                        if (visibleCount === 0) {
-                            syncBtn.disabled = true
-                        }
+                        // Note: we deliberately do NOT disable the Sync button
+                        // here. Sync acts on the full queue, which may still
+                        // have synced items even after every visible card is
+                        // removed.
                     })
                 } catch (e) {
                     log('Remove from queue failed', 'error', e)
