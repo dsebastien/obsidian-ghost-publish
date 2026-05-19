@@ -59,6 +59,8 @@ The Queue sub-tab lists every note already flagged for the active preset. Each c
 
 You can remove a note from the queue without affecting the post on Ghost (the post stays live; the plugin just stops tracking it).
 
+Sync completion takes about half a second to reflect in the queue (badges flip from **New** to **Synced**, timestamps update). The slight delay is intentional — it lets Obsidian's metadata cache catch up to the frontmatter writes the sync just made.
+
 ## Recently published
 
 Up to 30 notes with a Ghost id and a sync timestamp for the active preset, sorted by most recent. The **Open in Ghost** button opens the Ghost Admin editor for that post.
@@ -79,6 +81,10 @@ Up to 30 notes with a Ghost id and a sync timestamp for the active preset, sorte
 6. **Embed upgrades.** YouTube paragraphs → oembed cards; LINK-block paragraphs → bookmark cards.
 7. **Optional newsletter dispatch.** If the preset has a newsletter AND the note opted into email AND it has never been emailed, the draft transitions to published with the newsletter slug (the only Ghost transition that fires the email).
 8. **Frontmatter writeback.** ghost_id, synced_at, content_hash, preset id, optionally emailed_at, plus the cosmetic `published`, `date_published`, `date_updated` fields.
+
+## Listing notes
+
+When a preset has **Listing note** enabled, the plugin regenerates the configured note after every sync with one markdown line per published post (most recent first). The plugin automatically marks the listing note with the configured ignore flag so it never appears as a triage candidate — even though it lives in your vault and may otherwise match your eligibility gate. If you delete or rename the listing path in settings, the previously-generated note is left in place (the plugin doesn't garbage-collect old listing notes).
 
 ## Commands
 

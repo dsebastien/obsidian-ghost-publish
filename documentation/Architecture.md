@@ -37,7 +37,10 @@ src/
     │   ├── build-html.ts                marked → optional callout + HTML + image cards.
     │   ├── embed-youtube.ts             Post-create upgrade: link paragraphs → embed cards.
     │   ├── embed-links.ts               Post-create upgrade: link paragraphs → bookmark cards.
-    │   ├── news-feed-writer.ts          Per-preset listing-note rewriter.
+    │   ├── news-feed-writer.ts          Per-preset listing-note rewriter. Marks
+    │   │                                the listing note as ignored after each
+    │   │                                regeneration so it never appears as a
+    │   │                                triage candidate.
     │   └── ghost-metadata-cache.ts      refreshGhostMetadata: fetch + return tags + newsletters.
     ├── utils/                           Pure helpers (each has a .spec.ts).
     │   ├── strip-sections.fn.ts
@@ -51,12 +54,20 @@ src/
     └── views/
         ├── view-state.ts                ViewState + SubTab union + DEFAULT_VIEW_STATE.
         ├── ghost-publish-view.ts        ItemView. Preset tabs + sub-tabs + refresh button +
-        │                                config-warning / no-preset empty states.
+        │                                config-warning / no-preset empty states. Snapshots
+        │                                scrollTop on `.gp-view-content` across each render
+        │                                so manual refresh + sync don't snap to the top.
         └── pages/
-            ├── triage-page.ts
-            ├── queue-page.ts
+            ├── triage-page.ts           Per-card publish/email/ignore actions use the
+            │                            card-animations helper for in-place removal —
+            │                            no full re-render.
+            ├── queue-page.ts            Same in-place removal for Remove-from-queue;
+            │                            Sync button still triggers a full refresh.
             ├── recently-published-page.ts
-            └── empty-state-page.ts
+            ├── empty-state-page.ts
+            └── card-animations.ts       Fade + height-collapse → DOM remove. Wrapped in
+                                         `requestAnimationFrame` + `transitionend` with a
+                                         400ms safety fallback for reduced-motion.
 ```
 
 ## Data flow — sync one note under a preset
@@ -73,7 +84,8 @@ src/
     - upgrades YouTube/link paragraphs to embed/bookmark cards;
     - transitions draft→published with newsletter slug if shouldEmail;
     - writes ghost_id, synced_at, content_hash, preset id, emailed_at, published, date_published, date_updated.
-3. If the preset has `listingNoteEnabled` and a path: `regenerateListingNote(app, preset, refreshedQueue)`.
+3. If the preset has `listingNoteEnabled` and a path: `regenerateListingNote(app, preset, refreshedQueue, settings.frontmatter)` — rewrites the listing body via `vault.modify`, then calls `processFrontMatter` to set the configured ignore flag on the listing note itself (the body write wipes any existing frontmatter, so the flag has to be re-established each run).
+4. Two-stage refresh of the panel: an immediate `refreshView()` plus a `window.setTimeout(refreshView, POST_SYNC_REFRESH_DELAY_MS)` follow-up so the metadataCache 'changed' events from each `processFrontMatter` write have time to propagate before the queue is re-read.
 
 ## Settings: presets vs. globals
 
@@ -116,3 +128,10 @@ Per preset:
 - ItemView with two tab rows: enabled presets (top), sub-tabs Triage / Queue / Recently published (below).
 - Two empty-state surfaces (no Ghost config, no presets) share the same `renderEmptyState` component with an "Open settings" CTA.
 - Settings UI uses Obsidian's `Setting` builder for plain fields, a `Modal` for the preset editor, and `AbstractInputSuggest` for the tag autocomplete.
+
+### Scroll preservation + in-place card removal
+
+Two layers protect the user's scroll position across UI updates:
+
+- **In-place card removal** — per-card destructive actions (publish / publish+email / ignore on triage; remove-from-queue on queue) call `animateCardRemoval(card, onRemoved)` from `pages/card-animations.ts`. The helper locks the card's current height, schedules `.gp-card-removing` on the next animation frame (CSS transition fades opacity → collapses max-height / padding / border), then DOM-removes the element on `transitionend` (with a 400ms safety timeout). No full re-render happens, so other cards' scroll positions don't shift.
+- **scrollTop snapshot across full re-renders** — `GhostPublishView.render` calls `snapshotScroll()` before `contentEl.empty()` and `restoreScroll()` once the new content div is in place. This covers the manual refresh button and the queue's Sync button (which still trigger a full re-render because many cards may have changed state).

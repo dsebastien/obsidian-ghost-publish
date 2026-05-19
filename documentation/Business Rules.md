@@ -14,6 +14,7 @@ This document defines the core business rules. These MUST be respected unless ex
 - **BR-PRESET-1**: A note is assigned to at most ONE preset at a time. The preset id lives in the configurable `frontmatter.preset` field; the queue for a preset selects on this id.
 - **BR-PRESET-2**: Preset ids are stable for the lifetime of any note that references them. Renaming a preset (changing `name`) is safe; changing the `id` would orphan all assigned notes. The settings UI never exposes id editing.
 - **BR-PRESET-3**: Disabling a preset hides it from the panel but does NOT touch any of its queued notes. Deleting a preset leaves the published Ghost posts intact; orphaned notes stop appearing on the panel.
+- **BR-PRESET-4**: Listing notes self-mark as ignored. Every time `regenerateListingNote` rewrites a preset's listing note, it must call `processFrontMatter` to set the configured ignore flag (and clear any stale publish/email/preset flags) on the listing note itself. Reason: the listing note lives in the vault and would otherwise appear as a triage candidate or end up in its own preset's queue. `vault.modify` writes the body and wipes any existing frontmatter, so the flag has to be re-established after every regeneration.
 
 ## Auth
 
@@ -46,6 +47,9 @@ This document defines the core business rules. These MUST be respected unless ex
 - **BR-UI-1**: The panel displays an empty state (not a crash) when Ghost URL / Admin key are missing, OR when no presets are enabled. The empty state always offers an **Open settings** CTA.
 - **BR-UI-2**: The panel exposes a top-right **Refresh** button to re-read settings (e.g. after adding a preset).
 - **BR-UI-3**: Triage actions and queue mutations always refresh the panel after a write so the user sees the new state.
+- **BR-UI-4**: Single-card destructive actions (publish / publish+email / ignore on triage; remove-from-queue on queue) use surgical in-place removal via `animateCardRemoval` — no full re-render. Reason: full re-renders destroy scroll position when many cards are in the list.
+- **BR-UI-5**: Full re-renders snapshot `scrollTop` on `.gp-view-content` before `contentEl.empty()` and restore it once the new content is in place. Reason: the manual refresh button and the queue's Sync button still trigger full re-renders; scroll preservation prevents jarring snap-to-top.
+- **BR-UI-6**: After a sync completes, the panel refreshes twice — immediately for responsiveness, and again after `POST_SYNC_REFRESH_DELAY_MS` (500 ms). Reason: `app.fileManager.processFrontMatter` resolves before the corresponding `metadataCache` 'changed' events fire, so the immediate refresh would query stale frontmatter and show pre-sync badges + timestamps.
 
 ## Defaults
 
