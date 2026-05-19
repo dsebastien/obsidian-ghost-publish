@@ -83,5 +83,14 @@ void mock.module('obsidian', () => ({
         arrayBuffer: new ArrayBuffer(0)
     }),
     debounce: (fn: (...args: unknown[]) => unknown) => fn,
-    setIcon: () => {}
+    setIcon: () => {},
+    // `Keymap.isModEvent` — returns `false` by default. Tests that care
+    // about modifier behavior can override `Keymap.isModEvent` directly
+    // before invoking the function under test, then restore the default
+    // in `afterEach`.
+    Keymap: class Keymap {
+        static isModEvent(_ev: unknown): boolean | 'tab' | 'split' | 'window' {
+            return false
+        }
+    }
 }))
