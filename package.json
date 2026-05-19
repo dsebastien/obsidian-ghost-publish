@@ -1,0 +1,86 @@
+{
+    "name": "obsidian-ghost-publish",
+    "version": "0.0.0",
+    "description": "Publish your vault notes to a Ghost blog with configurable presets for tags, newsletters, and frontmatter conventions.",
+    "author": {
+        "name": "Sébastien Dubois",
+        "email": "developassion.sprl@gmail.com",
+        "url": "https://dsebastien.net"
+    },
+    "keywords": [
+        "obsidian",
+        "obsidian-plugin",
+        "ghost",
+        "ghost-blog",
+        "publishing"
+    ],
+    "license": "MIT",
+    "private": true,
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/dsebastien/obsidian-ghost-publish.git"
+    },
+    "bugs": {
+        "url": "https://github.com/dsebastien/obsidian-ghost-publish/issues"
+    },
+    "homepage": "https://github.com/dsebastien/obsidian-ghost-publish",
+    "engines": {
+        "node": ">=20.0.0",
+        "npm": ">=10.1.0"
+    },
+    "main": "main.js",
+    "packageManager": "bun@1.3.14",
+    "config": {
+        "commitizen": {
+            "path": "node_modules/cz-customizable"
+        },
+        "cz-customizable": {
+            "config": ".cz-config.cjs"
+        }
+    },
+    "scripts": {
+        "dev": "bun scripts/build.ts",
+        "build": "bun run tsc && bun scripts/build.ts --prod",
+        "setup": "git config --local --replace-all include.path ../.gitconfig",
+        "tsc": "tsc --noEmit",
+        "tsc:watch": "tsc --noEmit --watch --preserveWatchOutput",
+        "tscw": "bun run tsc:watch",
+        "lint": "eslint . --max-warnings 0",
+        "lint:fix": "eslint . --fix",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "test": "bun test",
+        "commit": "cz",
+        "cm": "cz",
+        "commit:lint": "commitlint --edit",
+        "release:update-version": "bun scripts/update-version.ts",
+        "release:version-bump": "bun scripts/version-bump.ts",
+        "release:changelog": "bun scripts/generate-changelog.ts",
+        "release": "./scripts/release.sh",
+        "validate": "bun run --parallel tsc test lint"
+    },
+    "devDependencies": {
+        "@commitlint/cli": "^20.1.0",
+        "@commitlint/config-conventional": "^20.1.0",
+        "@eslint/js": "^9.36.0",
+        "@tailwindcss/cli": "4.1.17",
+        "@types/bun": "latest",
+        "commitizen": "^4.3.1",
+        "conventional-changelog-cli": "5.0.0",
+        "conventional-changelog-conventionalcommits": "9.1.0",
+        "cz-customizable": "^7.5.1",
+        "eslint": "^9.36.0",
+        "eslint-config-prettier": "^10.1.5",
+        "eslint-plugin-obsidianmd": "0.1.9",
+        "globals": "17.0.0",
+        "obsidian": "latest",
+        "prettier": "^3.6.2",
+        "tailwindcss": "4.1.17",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "8.48.1"
+    },
+    "dependencies": {
+        "immer": "11.0.1",
+        "marked": "18.0.3"
+    }
+}
