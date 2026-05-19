@@ -8,6 +8,7 @@ import type { GhostNewsletterSummary, GhostTagSummary } from './types/ghost-api.
 import { GhostPublishSettingTab } from './settings/settings-tab'
 import {
     NOTICE_TIMEOUT_MS,
+    POST_SYNC_REFRESH_DELAY_MS,
     PUBLISH_ICON_FAIL,
     PUBLISH_ICON_OK,
     RIBBON_ICON,
@@ -102,7 +103,14 @@ export class GhostPublishPlugin extends Plugin {
                     : `${PUBLISH_ICON_OK} ${preset.name}: done`
             const body = parts.length > 0 ? parts.join(', ') : 'nothing to do'
             new Notice(`${headline} — ${body}`, NOTICE_TIMEOUT_MS)
+            // Two-stage refresh:
+            //   1) Immediate, so the panel feels responsive (Notice + reset).
+            //   2) Delayed, so metadataCache 'changed' events from each
+            //      processFrontMatter write have time to propagate. Without
+            //      this second pass, queue badges + sync timestamps reflect
+            //      the pre-sync state.
             this.refreshView()
+            window.setTimeout(() => this.refreshView(), POST_SYNC_REFRESH_DELAY_MS)
             for (const r of results) {
                 if (r.status === 'failed') {
                     log(`Failed: ${r.path}`, 'error', r.reason)

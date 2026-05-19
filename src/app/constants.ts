@@ -13,6 +13,14 @@ export const PUBLISH_ICON_OK = '✅'
 export const PUBLISH_ICON_FAIL = '❌'
 
 /**
+ * `app.fileManager.processFrontMatter` resolves once the file is written,
+ * but the metadataCache change events that the panel reads from fire on a
+ * subsequent tick. Schedule a follow-up refresh after sync so badges +
+ * timestamps reflect the post-sync state instead of the pre-sync one.
+ */
+export const POST_SYNC_REFRESH_DELAY_MS = 500
+
+/**
  * Cosmetic frontmatter fields written on every successful sync (independent
  * of the configurable per-preset frontmatter).
  */

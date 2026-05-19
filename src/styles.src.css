@@ -22,6 +22,20 @@
     @apply flex justify-end gap-2 mt-4;
 }
 
+/*
+ * Plugin-wide cursor rule: every interactive button inside the plugin's
+ * own surfaces (panel, preset editor modal, settings preset rows) gets
+ * the hand cursor. Disabled buttons are left alone — the `:not([disabled])`
+ * keeps the default cursor on inert buttons (e.g. "Sync to Ghost" while a
+ * sync is in flight, "Move up" on the first row, etc.).
+ */
+.ghost-publish-view button:not([disabled]),
+.gp-preset-editor button:not([disabled]),
+.gp-preset-list button:not([disabled]),
+.gp-modal-footer button:not([disabled]) {
+    @apply cursor-pointer;
+}
+
 /* ========================================
    PANEL — VIEW
    ======================================== */
