@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.3.0 (2026-06-02)
+
+### Features
+
+- **all:** improved UI
+
 ## 0.2.0 (2026-05-19)
 
 ### Features
