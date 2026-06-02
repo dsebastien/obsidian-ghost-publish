@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.4.0 (2026-06-02)
+
+### Features
+
+- **all:** removed notification when clicking on ignore in the triage tab
+
 ## 0.3.0 (2026-06-02)
 
 ### Features

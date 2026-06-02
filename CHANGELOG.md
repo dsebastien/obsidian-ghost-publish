@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.3.0...0.4.0) (2026-06-02)
+
+### Features
+
+* **all:** removed notification when clicking on ignore in the triage tab ([92362a2](https://github.com/dsebastien/obsidian-ghost-publish/commit/92362a22273b94d49f311942c9b9da5123addfb9))
+
 ## [0.3.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.2.0...0.3.0) (2026-06-02)
 
 ### Features
@@ -31,6 +37,7 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 * **plugin:** implement Ghost Publish with configurable presets ([abf2e2c](https://github.com/dsebastien/obsidian-ghost-publish/commit/abf2e2cb907220e8793b0198c1d13c41acccadd4))
+
 
 
 
