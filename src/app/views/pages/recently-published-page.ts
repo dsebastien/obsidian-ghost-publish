@@ -52,7 +52,11 @@ export function renderRecentlyPublishedPage(
         const card = list.createDiv({ cls: 'gp-card' })
 
         const header = card.createDiv({ cls: 'gp-card-header' })
-        const titleEl = header.createEl('a', { text: item.title, cls: 'gp-card-title' })
+        const titleEl = header.createEl('a', {
+            text: item.title,
+            cls: 'gp-card-title',
+            attr: { title: item.path }
+        })
         const openTitle = (ev: MouseEvent): void => openNoteLink(app, item.path, ev)
         titleEl.addEventListener('click', openTitle)
         titleEl.addEventListener('auxclick', openTitle)
@@ -62,7 +66,6 @@ export function renderRecentlyPublishedPage(
             text: new Date(item.syncedAt).toISOString().slice(0, 16).replace('T', ' '),
             cls: 'gp-card-date'
         })
-        meta.createSpan({ text: item.path, cls: 'gp-card-path' })
 
         if (item.emailedAt) {
             card.createDiv({ cls: 'gp-card-badges' }).createSpan({

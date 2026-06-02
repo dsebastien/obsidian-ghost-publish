@@ -96,7 +96,8 @@ export function renderQueuePage(
         const header = card.createDiv({ cls: 'gp-card-header' })
         const titleEl = header.createEl('a', {
             text: item.file.basename,
-            cls: 'gp-card-title'
+            cls: 'gp-card-title',
+            attr: { title: item.file.path }
         })
         const openTitle = (ev: MouseEvent): void => openNoteLink(app, item.file.path, ev)
         titleEl.addEventListener('click', openTitle)
@@ -107,7 +108,6 @@ export function renderQueuePage(
             text: new Date(item.file.stat.mtime).toISOString().slice(0, 10),
             cls: 'gp-card-date'
         })
-        meta.createSpan({ text: item.file.path, cls: 'gp-card-path' })
 
         const badges = card.createDiv({ cls: 'gp-card-badges' })
         if (item.hasGhostId) {

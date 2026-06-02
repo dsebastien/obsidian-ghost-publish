@@ -82,7 +82,8 @@ export function renderTriagePage(
         const header = card.createDiv({ cls: 'gp-card-header' })
         const titleEl = header.createEl('a', {
             text: candidate.file.basename,
-            cls: 'gp-card-title'
+            cls: 'gp-card-title',
+            attr: { title: candidate.file.path }
         })
         const openTitle = (ev: MouseEvent): void => openNoteLink(app, candidate.file.path, ev)
         titleEl.addEventListener('click', openTitle)
@@ -93,7 +94,6 @@ export function renderTriagePage(
             text: new Date(candidate.mtime).toISOString().slice(0, 10),
             cls: 'gp-card-date'
         })
-        meta.createSpan({ text: candidate.file.path, cls: 'gp-card-path' })
 
         const actions = card.createDiv({ cls: 'gp-card-actions' })
 
