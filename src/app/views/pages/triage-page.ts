@@ -53,7 +53,7 @@ export function renderTriagePage(
         card: HTMLElement,
         candidate: PublicationCandidate,
         action: TriageAction,
-        successMessage: string
+        successMessage: string | null
     ): void => {
         void (async () => {
             try {
@@ -64,7 +64,9 @@ export function renderTriagePage(
                     preset.id,
                     action
                 )
-                new Notice(successMessage, NOTICE_TIMEOUT_MS)
+                if (successMessage !== null) {
+                    new Notice(successMessage, NOTICE_TIMEOUT_MS)
+                }
                 animateCardRemoval(card, () => {
                     visibleCount = Math.max(0, visibleCount - 1)
                     renderSummary()
@@ -127,7 +129,7 @@ export function renderTriagePage(
 
         const ignoreBtn = actions.createEl('button', { text: 'Ignore', cls: 'mod-muted' })
         ignoreBtn.addEventListener('click', () => {
-            handleAction(card, candidate, 'ignore', `Ignored: ${candidate.file.basename}`)
+            handleAction(card, candidate, 'ignore', null)
         })
     }
 }
