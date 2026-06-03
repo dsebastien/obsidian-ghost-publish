@@ -22,7 +22,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
         this.plugin = plugin
     }
 
-    display(): void {
+    override display(): void {
         const { containerEl } = this
         containerEl.empty()
 
@@ -37,7 +37,13 @@ export class GhostPublishSettingTab extends PluginSettingTab {
         this.renderSupportSection(containerEl)
     }
 
-    private update(mutator: (draft: Draft<PluginSettings>) => void): void {
+    // NOTE: This helper must NOT be named `update`. Obsidian's settings
+    // framework (new settings window, 1.9+) calls `update()` on every
+    // registered SettingTab during `addSettingTab`, with no arguments. A
+    // method named `update` here shadows that internal call, so Immer's
+    // `produce` receives an `undefined` recipe and throws
+    // "[Immer] The first or second argument to `produce` must be a function".
+    private mutateSettings(mutator: (draft: Draft<PluginSettings>) => void): void {
         this.plugin.settings = produce(this.plugin.settings, mutator)
         void this.plugin.saveSettings()
     }
@@ -54,7 +60,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                 text.setPlaceholder('https://example.ghost.io')
                     .setValue(this.plugin.settings.ghostUrl)
                     .onChange((value) =>
-                        this.update((d) => {
+                        this.mutateSettings((d) => {
                             d.ghostUrl = value.trim().replace(/\/+$/, '')
                         })
                     )
@@ -70,7 +76,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                 text.setPlaceholder('id:secret')
                     .setValue(this.plugin.settings.ghostAdminKey)
                     .onChange((value) =>
-                        this.update((d) => {
+                        this.mutateSettings((d) => {
                             d.ghostAdminKey = value.trim()
                         })
                     )
@@ -91,7 +97,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                 text.setPlaceholder('https://notes.example.com')
                     .setValue(this.plugin.settings.notesBaseUrl)
                     .onChange((value) =>
-                        this.update((d) => {
+                        this.mutateSettings((d) => {
                             d.notesBaseUrl = value.trim().replace(/\/+$/, '')
                         })
                     )
@@ -110,7 +116,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                 area.inputEl.rows = 4
                 area.inputEl.addClass('gp-textarea')
                 area.setValue(this.plugin.settings.excludedFolders.join('\n')).onChange((v) =>
-                    this.update((d) => {
+                    this.mutateSettings((d) => {
                         d.excludedFolders = splitLines(v)
                     })
                 )
@@ -126,7 +132,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                     .setPlaceholder('type/map/moc')
                     .setValue(this.plugin.settings.mocTag)
                     .onChange((v) =>
-                        this.update((d) => {
+                        this.mutateSettings((d) => {
                             d.mocTag = v.trim()
                         })
                     )
@@ -147,7 +153,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                 area.inputEl.rows = 4
                 area.inputEl.addClass('gp-textarea')
                 area.setValue(this.plugin.settings.stripSections.join('\n')).onChange((v) =>
-                    this.update((d) => {
+                    this.mutateSettings((d) => {
                         d.stripSections = splitLines(v)
                     })
                 )
@@ -162,7 +168,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                 area.inputEl.rows = 5
                 area.inputEl.addClass('gp-textarea')
                 area.setValue(serializeKnownUrls(this.plugin.settings.knownUrls)).onChange((v) =>
-                    this.update((d) => {
+                    this.mutateSettings((d) => {
                         d.knownUrls = parseKnownUrls(v)
                     })
                 )
@@ -237,7 +243,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                         .setPlaceholder(DEFAULT_FRONTMATTER[f.key])
                         .setValue(this.plugin.settings.frontmatter[f.key])
                         .onChange((v) =>
-                            this.update((d) => {
+                            this.mutateSettings((d) => {
                                 d.frontmatter[f.key] = v.trim()
                             })
                         )
@@ -265,7 +271,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                     b.setButtonText('Refreshing…')
                     try {
                         const result = await refreshGhostMetadata(this.plugin.settings)
-                        this.update((d) => {
+                        this.mutateSettings((d) => {
                             d.cachedTags = result.tags
                             d.cachedNewsletters = result.newsletters
                             d.tagsFetchedAt = result.fetchedAt
@@ -324,7 +330,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             })
             setIcon(enabledToggle, preset.enabled ? 'eye' : 'eye-off')
             enabledToggle.addEventListener('click', () => {
-                this.update((d) => {
+                this.mutateSettings((d) => {
                     const target = d.presets[idx]
                     if (target) target.enabled = !target.enabled
                 })
@@ -338,7 +344,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             setIcon(upBtn, 'arrow-up')
             upBtn.disabled = idx === 0
             upBtn.addEventListener('click', () => {
-                this.update((d) => moveItem(d.presets, idx, idx - 1))
+                this.mutateSettings((d) => moveItem(d.presets, idx, idx - 1))
                 this.display()
             })
 
@@ -349,7 +355,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             setIcon(downBtn, 'arrow-down')
             downBtn.disabled = idx === presets.length - 1
             downBtn.addEventListener('click', () => {
-                this.update((d) => moveItem(d.presets, idx, idx + 1))
+                this.mutateSettings((d) => moveItem(d.presets, idx, idx + 1))
                 this.display()
             })
 
@@ -361,7 +367,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                     this.plugin.settings.cachedTags,
                     this.plugin.settings.cachedNewsletters,
                     (next) => {
-                        this.update((d) => {
+                        this.mutateSettings((d) => {
                             const target = d.presets[idx]
                             if (target) Object.assign(target, next)
                         })
@@ -381,7 +387,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                     'Delete preset',
                     `Delete "${preset.name}"? Notes already published under this preset are NOT touched in Ghost.`,
                     () => {
-                        this.update((d) => {
+                        this.mutateSettings((d) => {
                             d.presets.splice(idx, 1)
                         })
                         this.plugin.refreshView()
@@ -402,7 +408,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                     this.plugin.settings.cachedTags,
                     this.plugin.settings.cachedNewsletters,
                     (next) => {
-                        this.update((d) => {
+                        this.mutateSettings((d) => {
                             d.presets.push(next)
                         })
                         this.plugin.refreshView()
@@ -436,7 +442,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             )
             .addToggle((t) =>
                 t.setValue(this.plugin.settings.skipCanonicalProbe).onChange((v) =>
-                    this.update((d) => {
+                    this.mutateSettings((d) => {
                         d.skipCanonicalProbe = v
                     })
                 )
@@ -447,7 +453,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             .setDesc('Verbose logging in the developer console.')
             .addToggle((t) =>
                 t.setValue(this.plugin.settings.debugModeEnabled).onChange((v) =>
-                    this.update((d) => {
+                    this.mutateSettings((d) => {
                         d.debugModeEnabled = v
                     })
                 )

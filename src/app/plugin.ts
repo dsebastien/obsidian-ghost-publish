@@ -19,7 +19,7 @@ import { MissingGhostConfigError, publishAllForPreset } from './services/publish
 import { log } from '../utils/log'
 
 export class GhostPublishPlugin extends Plugin {
-    settings: PluginSettings = produce(DEFAULT_SETTINGS, () => DEFAULT_SETTINGS)
+    override settings: PluginSettings = produce(DEFAULT_SETTINGS, () => DEFAULT_SETTINGS)
 
     override async onload(): Promise<void> {
         log('Initializing', 'debug')
