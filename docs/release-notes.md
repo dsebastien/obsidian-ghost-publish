@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.4.1 (2026-06-03)
+
+### Bug Fixes
+
+- **all:** fix plugin loading after latest Obsidian release search screen changes
+
 ## 0.4.0 (2026-06-02)
 
 ### Features

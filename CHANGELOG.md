@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.1](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.4.0...0.4.1) (2026-06-03)
+
+### Bug Fixes
+
+* **all:** fix plugin loading after latest Obsidian release search screen changes ([ba4db34](https://github.com/dsebastien/obsidian-ghost-publish/commit/ba4db34945e748bc5d117634b76afb21e3630e8b))
+
 ## [0.4.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.3.0...0.4.0) (2026-06-02)
 
 ### Features
@@ -37,6 +43,7 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 * **plugin:** implement Ghost Publish with configurable presets ([abf2e2c](https://github.com/dsebastien/obsidian-ghost-publish/commit/abf2e2cb907220e8793b0198c1d13c41acccadd4))
+
 
 
 
