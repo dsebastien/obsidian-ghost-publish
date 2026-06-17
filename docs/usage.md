@@ -86,7 +86,7 @@ Up to 30 notes with a Ghost id and a sync timestamp for the active preset, sorte
     - Rewrite `![](youtube-url)` and `LINK:` blocks to marker paragraphs.
     - Upload every `![[image]]` to Ghost; rewrite to `![alt](ghost-url)`.
     - Resolve `[[wikilinks]]`: LINK-block URL > known URL map > public-mirror URL (when eligibility key is set) > bold-text fallback.
-4. **HTML build.** Markdown → HTML via `marked`; canonical callout prepended when applicable.
+4. **HTML build.** Markdown → HTML via `marked`, including footnotes (`text[^1]`, `[^1]: …`, and inline `^[…]`) rendered to superscript anchors plus a trailing footnotes section; canonical callout prepended when applicable.
 5. **Post create or update.** Status, tags, optional `canonical_url`, `custom_excerpt`. Existing posts use `updated_at` for optimistic concurrency. 404 triggers a clean recreate.
 6. **Embed upgrades.** YouTube paragraphs → oembed cards; LINK-block paragraphs → bookmark cards.
 7. **Optional newsletter dispatch.** If the preset has a newsletter AND the note opted into email AND it has never been emailed, the draft transitions to published with the newsletter slug (the only Ghost transition that fires the email).

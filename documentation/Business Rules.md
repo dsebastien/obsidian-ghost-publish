@@ -41,6 +41,7 @@ This document defines the core business rules. These MUST be respected unless ex
 - **BR-PROC-2**: Strip-sections matching is case- and punctuation-insensitive.
 - **BR-PROC-3**: Wikilink resolution priority: LINK-block-paired URL > known URL map > public-mirror URL (only if `frontmatter.eligibility` is set AND `notesBaseUrl` is configured AND the target note satisfies the eligibility key) > bold-text fallback.
 - **BR-PROC-4**: `![[image]]` embeds matching `.png/.jpg/.jpeg/.gif/.webp/.svg` are uploaded to Ghost. Non-image `![[…]]` embeds are dropped silently (Ghost has no equivalent).
+- **BR-PROC-5**: Markdown footnotes are rendered to footnote HTML by `services/footnotes.ts` (not stock `marked`, which has none). References (`[^id]`), definitions (`[^id]: …`), and inline footnotes (`^[…]`) become superscript anchors plus a trailing `<section class="footnotes">` ordered list. Footnotes are numbered by first-reference order; definitions never referenced are dropped; references with no definition are left as literal text. Parse state is per-call (a fresh `Marked` instance per render) so numbering never leaks across notes.
 
 ## UI
 

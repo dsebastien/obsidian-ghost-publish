@@ -34,7 +34,8 @@ src/
     │   ├── canonical-probe.ts           GET probe with exponential backoff.
     │   ├── wikilink-resolver.ts         metadataCache-based wikilink → URL map.
     │   ├── upload-vault-images.ts       Push ![[image]] embeds to Ghost.
-    │   ├── build-html.ts                marked → optional callout + HTML + image cards.
+    │   ├── footnotes.ts                 marked extension: footnote refs/defs/inline → footnote HTML.
+    │   ├── build-html.ts                marked (+footnotes) → optional callout + HTML + image cards.
     │   ├── embed-youtube.ts             Post-create upgrade: link paragraphs → embed cards.
     │   ├── embed-links.ts               Post-create upgrade: link paragraphs → bookmark cards.
     │   ├── news-feed-writer.ts          Per-preset listing-note rewriter. Marks
@@ -79,7 +80,7 @@ src/
     - hashes the body; short-circuits to `unchanged` if id+hash match;
     - if the preset enables canonical URL: HEAD-probes (unless globally skipped);
     - builds the link map via `metadataCache.getFirstLinkpathDest` + frontmatter checks;
-    - strips → YouTube → LINK blocks → images → wikilinks → marked → HTML;
+    - strips → YouTube → LINK blocks → images → wikilinks → marked (+footnotes) → HTML;
     - calls Ghost (update by id, else create as draft when newsletter+email opt-in, else published);
     - upgrades YouTube/link paragraphs to embed/bookmark cards;
     - transitions draft→published with newsletter slug if shouldEmail;

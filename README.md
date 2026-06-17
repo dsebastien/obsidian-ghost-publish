@@ -12,6 +12,7 @@ Publish your vault notes to a [Ghost](https://ghost.org) blog with configurable 
 - **Image upload** — every `![[image]]` embed is uploaded to Ghost and rewritten to a Ghost image card.
 - **Wikilink resolution** — known-URL map, optional public-mirror lookup, bold-text fallback.
 - **Embed upgrades** — YouTube links become Ghost oembed cards; `LINK:` blocks become bookmark cards.
+- **Footnotes** — Markdown footnotes (`text[^1]`, `[^1]: …`, and inline `^[…]`) are rendered to proper footnote anchors and a footnotes section on the published post.
 - **Configurable frontmatter keys** — bring your own property names so existing vaults can keep their conventions.
 - **Listing notes (optional)** — per preset, maintain a markdown index of every post currently published.
 

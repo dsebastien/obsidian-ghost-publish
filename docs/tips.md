@@ -33,6 +33,15 @@ To re-trigger the email, you'd need to delete the post in Ghost AND clear the `e
 
 The plugin first inserts a marker paragraph, then upgrades it post-creation via Ghost's lexical API. If the oembed lookup fails, the marker stays.
 
+## Footnotes
+
+Markdown footnotes are published as proper footnotes:
+
+- **Reference + definition:** `A claim.[^1]` somewhere in the body, with `[^1]: The source.` on its own line (definitions can span multiple indented lines).
+- **Inline footnote:** `A statement.^[An aside written inline.]`
+
+Footnotes are numbered by the order their references first appear, not the order the definitions are written. A definition that is never referenced is dropped, and a reference with no matching definition is left as literal text. The rendered post gets superscript anchors and a footnotes section at the bottom.
+
 ## Bring your own frontmatter
 
 If you already use a specific naming convention, set the frontmatter properties in settings to match. Every key is configurable. The plugin reads / writes only what you tell it to.
