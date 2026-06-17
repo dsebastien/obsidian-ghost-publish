@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.5.1 (2026-06-17)
+
+### Bug Fixes
+
+- **plugin:** resolve community-catalog review warnings
+
 ## 0.5.0 (2026-06-17)
 
 ### Features
