@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.4.1...0.5.0) (2026-06-17)
+
+### Features
+
+* **plugin:** add Markdown footnote support ([8f18e19](https://github.com/dsebastien/obsidian-ghost-publish/commit/8f18e19cc8dd2def4a2baac32ce50239582b2af5)), closes [#1](https://github.com/dsebastien/obsidian-ghost-publish/issues/1)
+
 ## [0.4.1](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.4.0...0.4.1) (2026-06-03)
 
 ### Bug Fixes
@@ -43,6 +49,7 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 * **plugin:** implement Ghost Publish with configurable presets ([abf2e2c](https://github.com/dsebastien/obsidian-ghost-publish/commit/abf2e2cb907220e8793b0198c1d13c41acccadd4))
+
 
 
 

@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.5.0 (2026-06-17)
+
+### Features
+
+- **plugin:** add Markdown footnote support
+
 ## 0.4.1 (2026-06-03)
 
 ### Bug Fixes
