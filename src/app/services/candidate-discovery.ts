@@ -99,7 +99,7 @@ function isExcluded(app: App, file: TFile, settings: PluginSettings): boolean {
     if (file.basename.endsWith(' (MoC)')) return true
     if (settings.mocTag) {
         const cache = app.metadataCache.getFileCache(file)
-        const fmTags = cache?.frontmatter?.['tags']
+        const fmTags: unknown = cache?.frontmatter?.['tags']
         const tags = Array.isArray(fmTags)
             ? (fmTags as unknown[])
             : typeof fmTags === 'string'

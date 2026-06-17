@@ -22,7 +22,17 @@ export class GhostPublishSettingTab extends PluginSettingTab {
         this.plugin = plugin
     }
 
+    // `display()` is deprecated since Obsidian 1.13.0 in favour of the
+    // declarative `getSettingDefinitions()` API, but the docs explicitly keep
+    // it as the supported fallback for plugins targeting older versions. We
+    // keep overriding it as our render entry point, but route every internal
+    // re-render through `renderSettings()` so we never *access* the deprecated
+    // member ourselves.
     override display(): void {
+        this.renderSettings()
+    }
+
+    private renderSettings(): void {
         const { containerEl } = this
         containerEl.empty()
 
@@ -281,7 +291,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                             `Cached ${result.tags.length} tags and ${result.newsletters.length} newsletters.`,
                             NOTICE_TIMEOUT_MS
                         )
-                        this.display()
+                        this.renderSettings()
                     } catch (e) {
                         const msg = e instanceof Error ? e.message : String(e)
                         log('Cache refresh failed', 'error', e)
@@ -334,7 +344,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                     const target = d.presets[idx]
                     if (target) target.enabled = !target.enabled
                 })
-                this.display()
+                this.renderSettings()
             })
 
             const upBtn = actions.createEl('button', {
@@ -345,7 +355,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             upBtn.disabled = idx === 0
             upBtn.addEventListener('click', () => {
                 this.mutateSettings((d) => moveItem(d.presets, idx, idx - 1))
-                this.display()
+                this.renderSettings()
             })
 
             const downBtn = actions.createEl('button', {
@@ -356,7 +366,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             downBtn.disabled = idx === presets.length - 1
             downBtn.addEventListener('click', () => {
                 this.mutateSettings((d) => moveItem(d.presets, idx, idx + 1))
-                this.display()
+                this.renderSettings()
             })
 
             const editBtn = actions.createEl('button', { text: 'Edit', cls: 'mod-cta' })
@@ -372,7 +382,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                             if (target) Object.assign(target, next)
                         })
                         this.plugin.refreshView()
-                        this.display()
+                        this.renderSettings()
                     }
                 ).open()
             })
@@ -391,7 +401,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                             d.presets.splice(idx, 1)
                         })
                         this.plugin.refreshView()
-                        this.display()
+                        this.renderSettings()
                     }
                 ).open()
             })
@@ -412,7 +422,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                             d.presets.push(next)
                         })
                         this.plugin.refreshView()
-                        this.display()
+                        this.renderSettings()
                     }
                 ).open()
             })
