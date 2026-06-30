@@ -6,6 +6,7 @@ Publish your vault notes to a [Ghost](https://ghost.org) blog with configurable 
 
 - **Presets** — define one or more publication profiles (Blog post, News, Microblog, …). Each preset has its own tags, optional newsletter slug, and publication status.
 - **Side panel** — one tab per preset, with sub-tabs for **Triage** (review candidate notes), **Queue** (notes flagged for sync), and **Recently published**.
+- **Search** — a search box at the top of the panel fuzzy-filters the active sub-tab's list by note title and path (typo-tolerant, e.g. `obsk` → _Obsidian Starter Kit_). The query carries over when you switch sub-tabs.
 - **Triage** — pick notes to publish from a time-range filter, with one-click _publish_, _publish + email_ and _ignore_ actions.
 - **Idempotent sync** — each note's body is hashed (SHA-256); unchanged notes skip the round-trip. Ghost post ids are recorded in frontmatter for in-place updates.
 - **Auto-fetched tag and newsletter lists** — connect once, click _Refresh tags & newsletters_, and the preset editor offers autocomplete + dropdowns from the cached data.

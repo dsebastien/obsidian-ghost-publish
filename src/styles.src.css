@@ -115,6 +115,59 @@
 }
 
 /* ========================================
+   PANEL — SEARCH
+   ======================================== */
+
+.gp-search-bar {
+    @apply flex items-center;
+}
+
+.gp-search-wrap {
+    @apply flex items-center gap-1.5 w-full px-2;
+    height: var(--input-height);
+    background-color: var(--background-modifier-form-field);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--radius-s);
+}
+
+.gp-search-wrap:focus-within {
+    border-color: var(--interactive-accent);
+}
+
+.gp-search-icon {
+    @apply flex items-center shrink-0;
+    color: var(--text-muted);
+}
+
+.gp-search-icon svg {
+    width: var(--icon-size);
+    height: var(--icon-size);
+}
+
+.gp-search-input {
+    @apply flex-1 text-sm;
+    background: transparent;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    color: var(--text-normal);
+}
+
+/* Hide the native clear affordance of <input type="search"> — we render our own. */
+.gp-search-input::-webkit-search-cancel-button {
+    @apply hidden;
+}
+
+.gp-search-clear {
+    @apply shrink-0 cursor-pointer;
+    color: var(--text-muted);
+}
+
+.gp-hidden {
+    @apply hidden;
+}
+
+/* ========================================
    PANEL — TRIAGE / QUEUE / RECENT
    ======================================== */
 

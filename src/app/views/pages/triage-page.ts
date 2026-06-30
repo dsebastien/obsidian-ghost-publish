@@ -10,6 +10,7 @@ import type { TriageAction } from '../../services/triage-actions'
 import { NOTICE_TIMEOUT_MS } from '../../constants'
 import { animateCardRemoval } from './card-animations'
 import { openNoteLink } from './open-note-link'
+import { filterNotesBySearch } from './note-search'
 import { log } from '../../../utils/log'
 
 export function renderTriagePage(
@@ -18,6 +19,7 @@ export function renderTriagePage(
     plugin: GhostPublishPlugin,
     preset: Preset,
     range: TriageRangeId,
+    searchQuery: string,
     onRangeChange: (range: TriageRangeId) => void
 ): void {
     const filters = container.createDiv({ cls: 'gp-filter-bar' })
@@ -31,15 +33,29 @@ export function renderTriagePage(
         onRangeChange(select.value as TriageRangeId)
     })
 
-    const candidates = findCandidates(app, plugin.settings, range)
+    const allCandidates = findCandidates(app, plugin.settings, range)
+    const isSearching = searchQuery.trim().length > 0
+    const candidates = filterNotesBySearch(
+        allCandidates,
+        searchQuery,
+        (c) => c.file.basename,
+        (c) => c.file.path
+    )
 
     const summary = container.createDiv({ cls: 'gp-summary' })
     let visibleCount = candidates.length
     const renderSummary = (): void => {
+        if (visibleCount === 0) {
+            summary.setText(
+                isSearching ? 'No candidates match your search.' : 'No candidates in this range.'
+            )
+            return
+        }
+        const noun = `candidate${visibleCount === 1 ? '' : 's'}`
         summary.setText(
-            visibleCount === 0
-                ? 'No candidates in this range.'
-                : `${visibleCount} candidate${visibleCount === 1 ? '' : 's'} in this range.`
+            isSearching
+                ? `${visibleCount} matching ${noun} of ${allCandidates.length} in this range.`
+                : `${visibleCount} ${noun} in this range.`
         )
     }
     renderSummary()

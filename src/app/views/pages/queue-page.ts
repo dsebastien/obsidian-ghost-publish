@@ -7,6 +7,7 @@ import { removeFromQueue } from '../../services/triage-actions'
 import { NOTICE_TIMEOUT_MS } from '../../constants'
 import { animateCardRemoval } from './card-animations'
 import { openNoteLink } from './open-note-link'
+import { filterNotesBySearch } from './note-search'
 import { log } from '../../../utils/log'
 
 export function renderQueuePage(
@@ -15,14 +16,24 @@ export function renderQueuePage(
     plugin: GhostPublishPlugin,
     preset: Preset,
     hideSynced: boolean,
+    searchQuery: string,
     onHideSyncedChange: (hide: boolean) => void,
     onRefresh: () => void
 ): void {
     // The full queue drives the Sync button (and the synced count); the
-    // visible subset drives what gets rendered as cards.
+    // visible subset drives what gets rendered as cards. Sync is always run
+    // against the full queue, independent of both the hide-synced filter and
+    // the search query.
     const fullQueue = findQueuedNotesForPreset(app, plugin.settings, preset.id)
     const syncedCount = fullQueue.filter((q) => q.hasGhostId).length
-    const visibleQueue = hideSynced ? fullQueue.filter((q) => !q.hasGhostId) : fullQueue
+    const afterHideFilter = hideSynced ? fullQueue.filter((q) => !q.hasGhostId) : fullQueue
+    const isSearching = searchQuery.trim().length > 0
+    const visibleQueue = filterNotesBySearch(
+        afterHideFilter,
+        searchQuery,
+        (q) => q.file.basename,
+        (q) => q.file.path
+    )
 
     const headerBar = container.createDiv({ cls: 'gp-summary-bar' })
     const summaryEl = headerBar.createSpan({ cls: 'gp-summary' })
@@ -30,8 +41,9 @@ export function renderQueuePage(
     const renderSummary = (): void => {
         const visibleLabel = `${visibleCount} note${visibleCount === 1 ? '' : 's'} shown`
         const hiddenSuffix = hideSynced && syncedCount > 0 ? ` · ${syncedCount} synced hidden` : ''
+        const denominator = isSearching ? afterHideFilter.length : fullQueue.length
         const totalSuffix =
-            !hideSynced && fullQueue.length !== visibleCount ? ` of ${fullQueue.length}` : ''
+            (isSearching || !hideSynced) && denominator !== visibleCount ? ` of ${denominator}` : ''
         summaryEl.setText(`${visibleLabel}${totalSuffix}${hiddenSuffix}`)
     }
     renderSummary()
@@ -81,11 +93,18 @@ export function renderQueuePage(
     }
 
     if (visibleCount === 0) {
-        // All queued notes are synced AND the filter hides them.
-        container.createEl('p', {
-            text: `Everything's synced. Toggle "Show synced notes" to see ${syncedCount}.`,
-            cls: 'gp-empty'
-        })
+        if (isSearching) {
+            container.createEl('p', {
+                text: 'No queued notes match your search.',
+                cls: 'gp-empty'
+            })
+        } else {
+            // All queued notes are synced AND the filter hides them.
+            container.createEl('p', {
+                text: `Everything's synced. Toggle "Show synced notes" to see ${syncedCount}.`,
+                cls: 'gp-empty'
+            })
+        }
         return
     }
 

@@ -23,11 +23,19 @@ export interface ViewState {
      * note regardless of this filter.
      */
     queueHideSynced: boolean
+    /**
+     * Free-text search applied to the active sub-tab's list (triage / queue /
+     * recent). Filters by note title + vault path with typo-tolerant fuzzy
+     * matching. Persists across sub-tab switches so one query can be carried
+     * between views. Never affects the queue's Sync button.
+     */
+    searchQuery: string
 }
 
 export const DEFAULT_VIEW_STATE: ViewState = {
     activePresetId: '',
     activeSubTab: 'triage',
     triageRange: 'last14',
-    queueHideSynced: true
+    queueHideSynced: true,
+    searchQuery: ''
 }

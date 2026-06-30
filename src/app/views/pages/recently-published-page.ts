@@ -2,6 +2,9 @@ import type { App } from 'obsidian'
 import type { GhostPublishPlugin } from '../../plugin'
 import type { Preset } from '../../types/preset.intf'
 import { openNoteLink } from './open-note-link'
+import { filterNotesBySearch } from './note-search'
+
+const RECENT_LIMIT = 30
 
 interface PublishedItem {
     path: string
@@ -15,7 +18,8 @@ export function renderRecentlyPublishedPage(
     container: HTMLElement,
     app: App,
     plugin: GhostPublishPlugin,
-    preset: Preset
+    preset: Preset,
+    searchQuery: string
 ): void {
     const fm = plugin.settings.frontmatter
     const items: PublishedItem[] = []
@@ -36,11 +40,22 @@ export function renderRecentlyPublishedPage(
         })
     }
     items.sort((a, b) => b.syncedAt - a.syncedAt)
-    const top = items.slice(0, 30)
+    const isSearching = searchQuery.trim().length > 0
+    // Search across the full published set, then cap the rendered list — so a
+    // match older than the 30 most-recent is still findable.
+    const matched = filterNotesBySearch(
+        items,
+        searchQuery,
+        (i) => i.title,
+        (i) => i.path
+    )
+    const top = matched.slice(0, RECENT_LIMIT)
 
     if (top.length === 0) {
         container.createEl('p', {
-            text: `Nothing has been published under "${preset.name}" yet.`,
+            text: isSearching
+                ? 'No published notes match your search.'
+                : `Nothing has been published under "${preset.name}" yet.`,
             cls: 'gp-empty'
         })
         return

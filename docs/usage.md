@@ -35,6 +35,17 @@ A preset is a reusable publication profile:
 
 Presets are reorderable; reorder them in settings to control the panel tab order.
 
+## Searching
+
+A search box sits at the top of the panel, just below the sub-tabs. Type to filter the **active** sub-tab's list (Triage, Queue, or Recently published) by note title and vault path.
+
+- The match is fuzzy and typo-tolerant: `obsk` finds _Obsidian Starter Kit_, `templ` finds _Templating Basics_.
+- Results are ranked by relevance, with title matches ranked above path-only matches.
+- The query **carries over** when you switch sub-tabs, so you can search once and flip between views.
+- Clear it with the **✕** button (or by emptying the field) to show the full list again.
+
+The search only changes what's _shown_. On the Queue tab, the **Sync to Ghost** button always syncs every queued note, regardless of the search filter.
+
 ## Opening notes from the panel
 
 Every note title across the three sub-tabs (Triage / Queue / Recently published) behaves like a standard Obsidian wikilink:

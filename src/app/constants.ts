@@ -21,6 +21,13 @@ export const PUBLISH_ICON_FAIL = '❌'
 export const POST_SYNC_REFRESH_DELAY_MS = 500
 
 /**
+ * Debounce (ms) between a keystroke in the panel search box and the content
+ * re-render. Keeps typing snappy without re-filtering the card list on every
+ * single character.
+ */
+export const SEARCH_RENDER_DEBOUNCE_MS = 120
+
+/**
  * Cosmetic frontmatter fields written on every successful sync (independent
  * of the configurable per-preset frontmatter).
  */

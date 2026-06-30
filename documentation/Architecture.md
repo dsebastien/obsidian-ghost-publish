@@ -51,20 +51,32 @@ src/
     │   ├── derive-excerpt.fn.ts
     │   ├── content-hash.fn.ts           Web-Crypto SHA-256.
     │   ├── escape-html.fn.ts
+    │   ├── fuzzy-search.fn.ts           Typo-tolerant weighted multi-field fuzzy search
+    │   │                                (uses @leeoniya/ufuzzy). Ported from tools-website.
     │   └── promote-images.fn.ts
     └── views/
         ├── view-state.ts                ViewState + SubTab union + DEFAULT_VIEW_STATE.
-        ├── ghost-publish-view.ts        ItemView. Preset tabs + sub-tabs + refresh button +
-        │                                config-warning / no-preset empty states. Snapshots
-        │                                scrollTop on `.gp-view-content` across each render
-        │                                so manual refresh + sync don't snap to the top.
+        │                                Carries searchQuery (panel-local, persists across
+        │                                sub-tab switches).
+        ├── ghost-publish-view.ts        ItemView. Preset tabs + sub-tabs + search box +
+        │                                refresh button + config-warning / no-preset empty
+        │                                states. Snapshots scrollTop on `.gp-view-content`
+        │                                across each render so manual refresh + sync don't
+        │                                snap to the top. The search box lives in the header
+        │                                and debounce-re-renders ONLY `.gp-view-content`
+        │                                (rerenderContent) so typing never blurs the input.
         └── pages/
+            ├── note-search.ts           filterNotesBySearch: wraps fuzzy-search with the
+            │                            title+path field config; empty query = no-op.
             ├── triage-page.ts           Per-card publish/email/ignore actions use the
             │                            card-animations helper for in-place removal —
-            │                            no full re-render.
+            │                            no full re-render. Filters candidates via note-search.
             ├── queue-page.ts            Same in-place removal for Remove-from-queue;
-            │                            Sync button still triggers a full refresh.
-            ├── recently-published-page.ts
+            │                            Sync button still triggers a full refresh. Search
+            │                            filters the visible list; Sync still acts on the
+            │                            full queue.
+            ├── recently-published-page.ts  Search filters the full published set before the
+            │                            30-item cap, so older matches stay findable.
             ├── empty-state-page.ts
             └── card-animations.ts       Fade + height-collapse → DOM remove. Wrapped in
                                          `requestAnimationFrame` + `transitionend` with a
@@ -126,7 +138,8 @@ Per preset:
 ## UI
 
 - View type: `ghost-publish-view`.
-- ItemView with two tab rows: enabled presets (top), sub-tabs Triage / Queue / Recently published (below).
+- ItemView with two tab rows: enabled presets (top), sub-tabs Triage / Queue / Recently published (below), then a search box that filters the active sub-tab's list.
+- Search is typo-tolerant fuzzy matching over note title + vault path (`note-search.ts` → `fuzzy-search.fn.ts`). The query persists across sub-tab switches and only re-renders `.gp-view-content` (debounced) so the input keeps focus. See BR-UI-8.
 - Two empty-state surfaces (no Ghost config, no presets) share the same `renderEmptyState` component with an "Open settings" CTA.
 - Settings UI uses Obsidian's `Setting` builder for plain fields, a `Modal` for the preset editor, and `AbstractInputSuggest` for the tag autocomplete.
 
