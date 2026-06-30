@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.6.0 (2026-06-30)
+
+### Features
+
+- **plugin:** add fuzzy search box to filter the active panel view
+
 ## 0.5.1 (2026-06-17)
 
 ### Bug Fixes

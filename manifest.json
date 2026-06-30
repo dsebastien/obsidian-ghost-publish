@@ -2,7 +2,7 @@
     "id": "ghost-publish",
     "name": "Ghost Publish",
     "description": "Publish your vault notes to a Ghost blog with configurable presets for tags, newsletters, and frontmatter conventions.",
-    "version": "0.5.1",
+    "version": "0.6.0",
     "minAppVersion": "1.7.2",
     "isDesktopOnly": true,
     "author": "Sébastien Dubois",

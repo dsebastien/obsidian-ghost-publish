@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.5.1...0.6.0) (2026-06-30)
+
+### Features
+
+* **plugin:** add fuzzy search box to filter the active panel view ([6026d03](https://github.com/dsebastien/obsidian-ghost-publish/commit/6026d0342cc8e7b998b1e5c052e82465f7d2ad22))
+
 ## [0.5.1](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.5.0...0.5.1) (2026-06-17)
 
 ### Bug Fixes
@@ -55,6 +61,7 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 * **plugin:** implement Ghost Publish with configurable presets ([abf2e2c](https://github.com/dsebastien/obsidian-ghost-publish/commit/abf2e2cb907220e8793b0198c1d13c41acccadd4))
+
 
 
 
