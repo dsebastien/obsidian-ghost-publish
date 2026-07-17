@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.1](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.6.0...0.6.1) (2026-07-17)
+
 ## [0.6.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.5.1...0.6.0) (2026-06-30)
 
 ### Features
@@ -61,6 +63,7 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 * **plugin:** implement Ghost Publish with configurable presets ([abf2e2c](https://github.com/dsebastien/obsidian-ghost-publish/commit/abf2e2cb907220e8793b0198c1d13c41acccadd4))
+
 
 
 
