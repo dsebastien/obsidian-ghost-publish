@@ -16,6 +16,7 @@ Publish your vault notes to a [Ghost](https://ghost.org) blog with configurable 
 - **Footnotes** — Markdown footnotes (`text[^1]`, `[^1]: …`, and inline `^[…]`) are rendered to proper footnote anchors and a footnotes section on the published post.
 - **Configurable frontmatter keys** — bring your own property names so existing vaults can keep their conventions.
 - **Listing notes (optional)** — per preset, maintain a markdown index of every post currently published.
+- **What's new after updates.** After a plugin update, a one-time dialog shows the release notes you just received (including skipped versions) with ways to support development. Never shown on fresh installs or regular restarts.
 
 ## Install
 
