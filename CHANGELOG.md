@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.6.1...0.7.0) (2026-07-27)
+
+### Features
+
+* **plugin:** show a what's new dialog once after plugin updates ([dc2d7d2](https://github.com/dsebastien/obsidian-ghost-publish/commit/dc2d7d2137e1e3b7a4852fc060e39b46d4047467))
+
+### Bug Fixes
+
+* **plugin:** compile against public Obsidian typings (1.12.0) ([3e238e2](https://github.com/dsebastien/obsidian-ghost-publish/commit/3e238e2e0fdf125de0387f57a27eae65c1847d36))
+
 ## [0.6.1](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.6.0...0.6.1) (2026-07-17)
 
 ## [0.6.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.5.1...0.6.0) (2026-06-30)
@@ -63,6 +73,7 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 * **plugin:** implement Ghost Publish with configurable presets ([abf2e2c](https://github.com/dsebastien/obsidian-ghost-publish/commit/abf2e2cb907220e8793b0198c1d13c41acccadd4))
+
 
 
 
