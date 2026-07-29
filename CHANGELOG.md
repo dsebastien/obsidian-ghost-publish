@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.8.0...0.9.0) (2026-07-29)
+
+### Features
+
+* **plugin:** aggregate what's new dialogs across simultaneously updated plugins ([d3207f8](https://github.com/dsebastien/obsidian-ghost-publish/commit/d3207f83cdda44d87ccbcdac44a0b40b55378cb6))
+
 ## [0.8.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.7.0...0.8.0) (2026-07-29)
 
 ### Features
@@ -80,6 +86,7 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 * **plugin:** implement Ghost Publish with configurable presets ([abf2e2c](https://github.com/dsebastien/obsidian-ghost-publish/commit/abf2e2cb907220e8793b0198c1d13c41acccadd4))
+
 
 
 
