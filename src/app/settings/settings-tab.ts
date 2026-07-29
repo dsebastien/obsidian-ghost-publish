@@ -13,6 +13,7 @@ import { ConfirmModal } from './confirm-modal'
 import { BUY_ME_A_COFFEE_BADGE_DATA_URL } from '../assets/buy-me-a-coffee'
 import { log } from '../../utils/log'
 import { NOTICE_TIMEOUT_MS } from '../constants'
+import { BUY_ME_A_COFFEE_URL, renderSupportSection } from '../ui/support-links'
 
 export class GhostPublishSettingTab extends PluginSettingTab {
     plugin: GhostPublishPlugin
@@ -473,24 +474,15 @@ export class GhostPublishSettingTab extends PluginSettingTab {
     // ─── Support ──────────────────────────────────────────────────────────
 
     private renderSupportSection(container: HTMLElement): void {
-        new Setting(container).setName('Support').setHeading()
-
-        const supportDesc = new DocumentFragment()
-        supportDesc.createDiv({
-            text: 'Buy me a coffee to support the development of this plugin ❤️'
+        renderSupportSection(container, (el) => {
+            const linkEl = el.createEl('a', {
+                href: BUY_ME_A_COFFEE_URL
+            })
+            const imgEl = linkEl.createEl('img')
+            imgEl.src = BUY_ME_A_COFFEE_BADGE_DATA_URL
+            imgEl.alt = 'Buy me a coffee'
+            imgEl.width = 175
         })
-        new Setting(container).setDesc(supportDesc)
-
-        const linkEl = container.createEl('a', {
-            href: 'https://www.buymeacoffee.com/dsebastien'
-        })
-        const imgEl = linkEl.createEl('img')
-        imgEl.src = BUY_ME_A_COFFEE_BADGE_DATA_URL
-        imgEl.alt = 'Buy me a coffee'
-        imgEl.width = 175
-
-        const spacing = container.createDiv()
-        spacing.classList.add('support-header-margin')
     }
 }
 
