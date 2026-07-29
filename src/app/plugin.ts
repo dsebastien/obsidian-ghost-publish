@@ -17,7 +17,7 @@ import {
 import { GhostPublishView } from './views/ghost-publish-view'
 import { MissingGhostConfigError, publishAllForPreset } from './services/publish-service'
 import { log } from '../utils/log'
-import { registerWhatsNewDialog } from './whats-new'
+import { registerWhatsNewView } from './whats-new'
 
 export class GhostPublishPlugin extends Plugin {
     // No `override`: `Plugin.settings` only exists in API 1.13+ typings and the
@@ -26,7 +26,7 @@ export class GhostPublishPlugin extends Plugin {
 
     override async onload(): Promise<void> {
         // Must run before anything can call saveData (fresh-install detection)
-        registerWhatsNewDialog(this)
+        registerWhatsNewView(this)
         log('Initializing', 'debug')
         await this.loadSettings()
 
