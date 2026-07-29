@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.7.0...0.8.0) (2026-07-29)
+
+### Features
+
+* **plugin:** add Knowii community to the what's new dialog and harden it ([b8ebfd5](https://github.com/dsebastien/obsidian-ghost-publish/commit/b8ebfd53e41e27b0816435abdf47b94818a0cca7))
+* **plugin:** add Knowii community to the what's new dialog and harden it ([33ef8cf](https://github.com/dsebastien/obsidian-ghost-publish/commit/33ef8cf0dd40300e76ae0fa1e22cf46d3153d4cc))
+
 ## [0.7.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.6.1...0.7.0) (2026-07-27)
 
 ### Features
@@ -73,6 +80,7 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 * **plugin:** implement Ghost Publish with configurable presets ([abf2e2c](https://github.com/dsebastien/obsidian-ghost-publish/commit/abf2e2cb907220e8793b0198c1d13c41acccadd4))
+
 
 
 
