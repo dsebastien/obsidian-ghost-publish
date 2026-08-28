@@ -1,5 +1,16 @@
 @import 'tailwindcss';
 
+/*
+ * Rows hosting an embedded block (the preset editor, the support section).
+ * `.setting-item` is a flex ROW in Obsidian's own stylesheet, which is
+ * UNLAYERED — and unlayered CSS beats layered CSS regardless of specificity.
+ * This rule must therefore stay outside any @layer, and the compound selector
+ * outranks the app rule at equal layer.
+ */
+.setting-item.gp-settings-embed {
+    display: block;
+}
+
 /* ========================================
    SHARED
    ======================================== */

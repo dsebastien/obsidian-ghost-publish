@@ -84,6 +84,9 @@ void mock.module('obsidian', () => ({
     }),
     debounce: (fn: (...args: unknown[]) => unknown) => fn,
     setIcon: () => {},
+    ItemView: class ItemView {},
+    WorkspaceLeaf: class WorkspaceLeaf {},
+    MarkdownRenderer: { render: async () => {} },
     // `Keymap.isModEvent` — returns `false` by default. Tests that care
     // about modifier behavior can override `Keymap.isModEvent` directly
     // before invoking the function under test, then restore the default

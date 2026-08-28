@@ -5,6 +5,10 @@ nav_order: 3
 
 # Configuration
 
+> Requires Obsidian 1.13.0 or later: the settings pane uses the declarative
+> settings API, which also makes every setting findable through Obsidian's
+> settings search.
+
 Open **Settings → Ghost Publish**. Settings persist via the standard `loadData` / `saveData` mechanism.
 
 ## Ghost

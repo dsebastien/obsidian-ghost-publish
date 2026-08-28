@@ -20,6 +20,12 @@ Publish your vault notes to a [Ghost](https://ghost.org) blog with configurable 
 
 ## Install
 
+> **Requires Obsidian 1.13.0 or later.** The settings pane uses the declarative
+> settings API introduced in 1.13. On an older version the plugin will not load,
+> and the community catalog will not offer it to you — but a manual or BRAT
+> install can still put an incompatible build in your vault, so check
+> **Settings → About** first.
+
 `isDesktopOnly: true` — the plugin needs network access to Ghost and reads `GHOST_ADMIN_KEY` as an optional env fallback.
 
 Manual install:
