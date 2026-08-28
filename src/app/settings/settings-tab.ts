@@ -142,6 +142,13 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                                                 d.ghostAdminKey = value.trim()
                                             })
                                             .catch(() => {
+                                                // Roll the input back to the
+                                                // stored truth: leaving the
+                                                // typed value visible would
+                                                // show a key that is not the
+                                                // one actually used for
+                                                // publishing.
+                                                text.setValue(this.plugin.settings.ghostAdminKey)
                                                 new Notice('Failed to save settings.')
                                             })
                                     })
@@ -200,15 +207,27 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             {
                 type: 'group',
                 heading: 'Frontmatter properties',
-                items: FRONTMATTER_FIELDS.map((f) => ({
-                    name: f.label,
-                    desc: f.desc,
-                    control: {
-                        type: 'text' as const,
-                        key: `frontmatter.${f.key}`,
-                        placeholder: DEFAULT_FRONTMATTER[f.key]
-                    }
-                }))
+                items: [
+                    // Groups cannot carry a description, so the old heading's
+                    // explanation survives as an info row. The no-op render
+                    // hook is load-bearing: the framework skips a definition
+                    // with neither control nor render entirely.
+                    {
+                        name: '',
+                        desc: 'Customise the property names the plugin reads and writes on each note. All presets share these names.',
+                        searchable: false,
+                        render: (): void => {}
+                    },
+                    ...FRONTMATTER_FIELDS.map((f) => ({
+                        name: f.label,
+                        desc: f.desc,
+                        control: {
+                            type: 'text' as const,
+                            key: `frontmatter.${f.key}`,
+                            placeholder: DEFAULT_FRONTMATTER[f.key]
+                        }
+                    }))
+                ]
             },
             {
                 type: 'group',
@@ -221,15 +240,27 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                         // that happens to live in the same store.
                         render: (setting): void => {
                             setting.addButton((b) => {
-                                b.setButtonText('Refresh tags & newsletters')
+                                // The pane can re-render mid-refresh (any
+                                // other write triggers update()), replacing a
+                                // disabled button with a fresh enabled one —
+                                // so the in-flight state lives on the tab, not
+                                // the button, and refreshCache itself drops
+                                // concurrent calls.
+                                const syncLabel = (): void => {
+                                    b.setDisabled(this.cacheRefreshPending)
+                                    b.setButtonText(
+                                        this.cacheRefreshPending
+                                            ? 'Refreshing…'
+                                            : 'Refresh tags & newsletters'
+                                    )
+                                }
+                                syncLabel()
                                 b.setCta()
                                 b.onClick(() => {
-                                    b.setDisabled(true)
-                                    b.setButtonText('Refreshing…')
                                     void this.refreshCache().finally(() => {
-                                        b.setDisabled(false)
-                                        b.setButtonText('Refresh tags & newsletters')
+                                        syncLabel()
                                     })
+                                    syncLabel()
                                 })
                             })
                         }
@@ -240,12 +271,13 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                 type: 'group',
                 heading: 'Presets',
                 items: [
+                    // The group heading carries the section name; this row
+                    // keeps the old description visible above the editor.
                     {
-                        name: 'Presets',
+                        name: '',
                         desc: 'Each preset becomes a tab in the panel. Configure tags, newsletter and publishing options per preset.',
                         searchable: false,
                         render: (setting): void => {
-                            setting.infoEl.remove() // the editor draws its own copy
                             // `.setting-item` is a flex ROW; the preset list is
                             // a stack of full-width rows.
                             setting.settingEl.addClass('gp-settings-embed')
@@ -346,6 +378,12 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                 throw new Error(`Setting "${key}" does not address a known field.`)
             }
             const next = this.expectString(key, value).trim()
+            if (
+                next ===
+                this.plugin.settings.frontmatter[field as keyof PluginSettings['frontmatter']]
+            ) {
+                return
+            }
             await this.plugin.updateSettings((d) => {
                 d.frontmatter[field as keyof PluginSettings['frontmatter']] = next
             })
@@ -354,6 +392,9 @@ export class GhostPublishSettingTab extends PluginSettingTab {
         switch (key) {
             case 'ghostUrl': {
                 const next = this.expectString(key, value).trim().replace(/\/+$/, '')
+                if (next === this.plugin.settings.ghostUrl) {
+                    return
+                }
                 await this.plugin.updateSettings((d) => {
                     d.ghostUrl = next
                 })
@@ -361,6 +402,9 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             }
             case 'notesBaseUrl': {
                 const next = this.expectString(key, value).trim().replace(/\/+$/, '')
+                if (next === this.plugin.settings.notesBaseUrl) {
+                    return
+                }
                 await this.plugin.updateSettings((d) => {
                     d.notesBaseUrl = next
                 })
@@ -368,6 +412,9 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             }
             case 'mocTag': {
                 const next = this.expectString(key, value).trim()
+                if (next === this.plugin.settings.mocTag) {
+                    return
+                }
                 await this.plugin.updateSettings((d) => {
                     d.mocTag = next
                 })
@@ -375,6 +422,12 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             }
             case 'excludedFolders': {
                 const next = splitLines(this.expectString(key, value))
+                // An equal-but-new array must not queue a write: every
+                // keystroke calls this, and pointless saveData churn can
+                // delay later writes and leave one pending at shutdown.
+                if (next.join('\n') === this.plugin.settings.excludedFolders.join('\n')) {
+                    return
+                }
                 await this.plugin.updateSettings((d) => {
                     d.excludedFolders = next
                 })
@@ -382,6 +435,12 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             }
             case 'stripSections': {
                 const next = splitLines(this.expectString(key, value))
+                // An equal-but-new array must not queue a write: every
+                // keystroke calls this, and pointless saveData churn can
+                // delay later writes and leave one pending at shutdown.
+                if (next.join('\n') === this.plugin.settings.stripSections.join('\n')) {
+                    return
+                }
                 await this.plugin.updateSettings((d) => {
                     d.stripSections = next
                 })
@@ -389,6 +448,11 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             }
             case 'knownUrls': {
                 const next = parseKnownUrls(this.expectString(key, value))
+                if (
+                    serializeKnownUrls(next) === serializeKnownUrls(this.plugin.settings.knownUrls)
+                ) {
+                    return
+                }
                 await this.plugin.updateSettings((d) => {
                     d.knownUrls = next
                 })
@@ -439,13 +503,25 @@ export class GhostPublishSettingTab extends PluginSettingTab {
         return `${counts} Tags fetched ${tagsStamp}. Newsletters fetched ${newsStamp}.`
     }
 
+    /** One cache refresh at a time; see the render hook for why it lives here. */
+    private cacheRefreshPending = false
+
     /**
      * Fetches tags + newsletters from Ghost and persists them. Extracted from
      * the button so the write path is testable without a DOM. Re-renders only
      * after a successful persist.
      */
     async refreshCache(): Promise<void> {
+        if (this.cacheRefreshPending) {
+            return
+        }
+        this.cacheRefreshPending = true
         try {
+            // Flush the write queue first: credentials the user just typed may
+            // still be pending, and reading the committed settings before they
+            // land would fetch (and then persist) another account's cache next
+            // to the new connection settings.
+            await this.plugin.updateSettings(() => {})
             const result = await refreshGhostMetadata(this.plugin.settings)
             await this.plugin.updateSettings((d) => {
                 d.cachedTags = result.tags
@@ -462,6 +538,8 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             const msg = e instanceof Error ? e.message : String(e)
             log('Cache refresh failed', 'error', e)
             new Notice(`Refresh failed: ${msg}`, NOTICE_TIMEOUT_MS)
+        } finally {
+            this.cacheRefreshPending = false
         }
     }
 
@@ -514,6 +592,13 @@ export class GhostPublishSettingTab extends PluginSettingTab {
 
             const actions = row.createDiv({ cls: 'gp-preset-actions' })
 
+            // Every mutation below resolves its target BY STABLE ID inside
+            // the mutator, never by the index captured at render time: a
+            // modal (Edit, Delete-confirm) can stay open across re-renders,
+            // and a captured index would then address whichever preset moved
+            // into that slot — overwriting or deleting the wrong one.
+            const presetId = preset.id
+
             const enabledToggle = actions.createEl('button', {
                 cls: 'clickable-icon',
                 attr: { 'aria-label': preset.enabled ? 'Disable preset' : 'Enable preset' }
@@ -521,7 +606,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             setIcon(enabledToggle, preset.enabled ? 'eye' : 'eye-off')
             enabledToggle.addEventListener('click', () => {
                 this.commitPresets((drafts) => {
-                    const target = drafts[idx]
+                    const target = drafts.find((p) => p.id === presetId)
                     if (target) target.enabled = !target.enabled
                 })
             })
@@ -533,7 +618,10 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             setIcon(upBtn, 'arrow-up')
             upBtn.disabled = idx === 0
             upBtn.addEventListener('click', () => {
-                this.commitPresets((drafts) => moveItem(drafts, idx, idx - 1))
+                this.commitPresets((drafts) => {
+                    const from = drafts.findIndex((p) => p.id === presetId)
+                    if (from >= 0) moveItem(drafts, from, from - 1)
+                })
             })
 
             const downBtn = actions.createEl('button', {
@@ -543,7 +631,10 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             setIcon(downBtn, 'arrow-down')
             downBtn.disabled = idx === presets.length - 1
             downBtn.addEventListener('click', () => {
-                this.commitPresets((drafts) => moveItem(drafts, idx, idx + 1))
+                this.commitPresets((drafts) => {
+                    const from = drafts.findIndex((p) => p.id === presetId)
+                    if (from >= 0) moveItem(drafts, from, from + 1)
+                })
             })
 
             const editBtn = actions.createEl('button', { text: 'Edit', cls: 'mod-cta' })
@@ -555,9 +646,11 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                     this.plugin.settings.cachedNewsletters,
                     (next) => {
                         // `next` is the modal's own clone, never a live
-                        // reference (see PresetEditorModal docs).
+                        // reference (see PresetEditorModal docs). If the
+                        // preset was deleted while the modal was open, the
+                        // edit is dropped rather than resurrected.
                         this.commitPresets((drafts) => {
-                            const target = drafts[idx]
+                            const target = drafts.find((p) => p.id === presetId)
                             if (target) Object.assign(target, next)
                         })
                     }
@@ -575,7 +668,8 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                     `Delete "${preset.name}"? Notes already published under this preset are NOT touched in Ghost.`,
                     () => {
                         this.commitPresets((drafts) => {
-                            drafts.splice(idx, 1)
+                            const target = drafts.findIndex((p) => p.id === presetId)
+                            if (target >= 0) drafts.splice(target, 1)
                         })
                     }
                 ).open()

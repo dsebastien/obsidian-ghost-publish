@@ -6,7 +6,7 @@ User-facing settings are documented in `docs/configuration.md`. This file covers
 
 - Storage: `app.saveData(this.settings)` (`<vault>/.obsidian/plugins/ghost-publish/data.json`).
 - Load: `loadData()` is parsed leniently — every field is type-checked individually; unknown / missing fields fall back to defaults from `DEFAULT_SETTINGS`. Tag / newsletter cache entries are filtered through type guards (`isTagSummary`, `isNewsletterSummary`) and presets through `isPresetLike` + `sanitizePreset`.
-- Immutability: settings are wrapped with `immer.produce`. Mutations in the settings tab go through a small `update(mutator)` helper.
+- Immutability: settings are wrapped with `immer.produce`. Every user-driven mutation goes through `plugin.updateSettings(mutator)` — the serialized persist-then-commit write path (writes queue; memory is swapped only after `saveData()` succeeds). `saveSettings()` is load-time-only. Never write via `saveData` directly, and never add a tab helper named `update` (reserved by the settings framework — see AGENTS.md).
 
 ## Environment
 

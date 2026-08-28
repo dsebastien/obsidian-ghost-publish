@@ -141,7 +141,7 @@ Per preset:
 - ItemView with two tab rows: enabled presets (top), sub-tabs Triage / Queue / Recently published (below), then a search box that filters the active sub-tab's list.
 - Search is typo-tolerant fuzzy matching over note title + vault path (`note-search.ts` → `fuzzy-search.fn.ts`). The query persists across sub-tab switches and only re-renders `.gp-view-content` (debounced) so the input keeps focus. See BR-UI-8.
 - Two empty-state surfaces (no Ghost config, no presets) share the same `renderEmptyState` component with an "Open settings" CTA.
-- Settings UI uses Obsidian's `Setting` builder for plain fields, a `Modal` for the preset editor, and `AbstractInputSuggest` for the tag autocomplete.
+- Settings UI is declarative (`getSettingDefinitions()`, Obsidian 1.13+): plain fields are declared controls, the Admin API key and the preset list are `render:` rows, the preset editor stays a `Modal`, and `AbstractInputSuggest` provides the tag autocomplete. Every write goes through the serialized `plugin.updateSettings` (persist-then-commit); see AGENTS.md "Declarative settings".
 
 ### Scroll preservation + in-place card removal
 

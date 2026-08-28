@@ -189,6 +189,21 @@ describe('setControlValue', () => {
         expect(tab.getControlValue('frontmatter.ghostId')).toBe('ghost_id')
     })
 
+    test('an equal value does not queue a write', async () => {
+        // Every keystroke calls setControlValue; parsing whitespace or a
+        // malformed line produces an equal-but-new array/object, and queuing
+        // those writes can delay real persistence behind pointless churn.
+        const { tab, plugin, saveData } = createHarness()
+
+        await tab.setControlValue('ghostUrl', plugin.settings.ghostUrl)
+        await tab.setControlValue('excludedFolders', plugin.settings.excludedFolders.join('\n'))
+        await tab.setControlValue('stripSections', ' \n ')
+        await tab.setControlValue('knownUrls', 'not-a-mapping')
+        await tab.setControlValue('frontmatter.ghostId', ` ${plugin.settings.frontmatter.ghostId} `)
+
+        expect(saveData).not.toHaveBeenCalled()
+    })
+
     test('rejects an unknown frontmatter field without writing', async () => {
         const { tab, saveData } = createHarness()
 
