@@ -3,6 +3,17 @@ import tseslint from 'typescript-eslint'
 import eslintConfigPrettier from 'eslint-config-prettier'
 import globals from 'globals'
 import obsidianmd from 'eslint-plugin-obsidianmd'
+// Passing `brands` REPLACES the plugin's default list rather than extending it
+// (see sentenceCaseUtil.js: `options?.brands ?? DEFAULT_BRANDS`). Listing only
+// this plugin's own names would therefore silently strip "Obsidian", "Git",
+// "Markdown", "GitHub", "Windows" and the other 40-odd defaults — and the
+// community catalog reviewer, which runs the plugin's own ruleset, would keep
+// enforcing every one of them. The loss shows up as findings you never see
+// locally, not as findings that go away.
+// Deep path because the package exports only its default plugin object; it is
+// pinned exactly, and a break here is a loud module-resolution error, never a
+// silent shrinking of the list.
+import { DEFAULT_BRANDS } from 'eslint-plugin-obsidianmd/dist/lib/rules/ui/brands.js'
 import { defineConfig } from 'eslint/config'
 
 export default defineConfig([
@@ -27,6 +38,8 @@ export default defineConfig([
             globals: {
                 ...globals.node,
                 ...globals.browser,
+                // Tests and build tooling run under the Bun runtime
+                Bun: 'readonly',
                 // Obsidian global functions
                 createDiv: 'readonly',
                 createEl: 'readonly',
@@ -63,8 +76,53 @@ export default defineConfig([
             'no-prototype-builtins': 'off',
             // Allow confirm for delete confirmations
             'no-alert': 'off',
-            // Disable sentence case rule - it has false positives for already-correct text
-            'obsidianmd/ui/sentence-case': 'off'
+            // Never disable obsidianmd/* rules here: the community catalog
+            // reviewer runs its own ruleset against the git archive, so a
+            // local disable only hides the finding until submission.
+            // Brand names are the supported escape hatch for sentence-case.
+            'obsidianmd/ui/sentence-case': [
+                'error',
+                {
+                    brands: [
+                        ...DEFAULT_BRANDS,
+                        // Author and funding links. Add this plugin's own
+                        // product names here; do NOT add ordinary UI words such
+                        // as 'Settings' — as a brand it makes every lowercase
+                        // occurrence a violation.
+                        'Knowii',
+                        'GitHub Sponsors',
+                        'Sébastien Dubois',
+                        'dSebastien',
+                        // This plugin's own names: the Ghost platform, its
+                        // admin app, and the plugin itself. Longest wins, so
+                        // 'Ghost Admin' and 'Ghost Publish' match before
+                        // 'Ghost'.
+                        'Ghost',
+                        'Ghost Admin',
+                        'Ghost Publish'
+                    ],
+                    // A matching regex exempts the ENTIRE string
+                    // (shouldIgnoreByRegex runs regex.test on the whole text),
+                    // so every pattern is anchored to the one literal it
+                    // excuses. These are UI strings whose casing is
+                    // deliberate: Ghost API field names (canonical_url), the
+                    // GHOST_ADMIN_KEY environment variable, quoted button
+                    // labels that must mirror their real casing, Ghost Admin
+                    // navigation paths, and lowercase placeholders.
+                    ignoreRegex: [
+                        '^id:secret$',
+                        '^type/map/moc$',
+                        '^e\\.g\\. Blog post$',
+                        '^Set\\ canonical_url$',
+                        '^When\\ enabled,\\ the\\ post\\ receives\\ canonical_url\\ and\\ a\\ "Canonical\\ version"\\ callout\\.\\ Requires\\ the\\ global\\ Notes\\ base\\ URL\\ setting\\.$',
+                        '^No\\ Ghost\\ tags\\ cached\\.\\ Use\\ the\\ "Refresh\\ tags\\ \\&\\ newsletters"\\ button\\ in\\ the\\ main\\ settings\\ page\\ to\\ populate\\ the\\ autocomplete\\.$',
+                        '^No\\ newsletters\\ cached\\.\\ Use\\ the\\ "Refresh\\ tags\\ \\&\\ newsletters"\\ button\\ in\\ the\\ main\\ settings\\ page\\ to\\ populate\\ this\\ dropdown\\.$',
+                        '^Format:\\ id:secret\\.\\ Falls\\ back\\ to\\ the\\ GHOST_ADMIN_KEY\\ environment\\ variable\\ when\\ empty\\.\\ Create\\ one\\ in\\ Ghost\\ Admin\\ →\\ Settings\\ →\\ Integrations\\.$',
+                        '^Public\\ URL\\ of\\ a\\ mirror\\ that\\ exposes\\ your\\ vault\\ notes\\.\\ Required\\ for\\ any\\ preset\\ that\\ sets\\ canonical_url,\\ and\\ for\\ resolving\\ \\[\\[wikilinks\\]\\]\\ to\\ public\\ URLs\\.$',
+                        '^Maps\\ wikilink\\ targets\\ to\\ canonical\\ external\\ URLs\\.\\ Format:\\ NoteName=https://…\\ on\\ each\\ line\\.\\ Wins\\ over\\ vault\\ lookup\\.$'
+                    ]
+                }
+            ]
         }
     }
 ])

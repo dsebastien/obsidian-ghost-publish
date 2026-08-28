@@ -22,7 +22,7 @@ import { registerWhatsNewView } from './whats-new'
 export class GhostPublishPlugin extends Plugin {
     // No `override`: `Plugin.settings` only exists in API 1.13+ typings and the
     // plugin supports older public releases.
-    settings: PluginSettings = produce(DEFAULT_SETTINGS, () => DEFAULT_SETTINGS)
+    override settings: PluginSettings = produce(DEFAULT_SETTINGS, () => DEFAULT_SETTINGS)
 
     override async onload(): Promise<void> {
         // Must run before anything can call saveData (fresh-install detection)

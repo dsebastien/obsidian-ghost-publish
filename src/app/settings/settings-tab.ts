@@ -136,7 +136,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
         new Setting(container)
             .setName('MoC tag')
             .setDesc(
-                'Frontmatter / inline tag that marks Map-of-Content notes (excluded from triage). Leave empty to disable.'
+                'Frontmatter / inline tag that marks map-of-content notes (excluded from triage). Leave empty to disable.'
             )
             .addText((text) =>
                 text
