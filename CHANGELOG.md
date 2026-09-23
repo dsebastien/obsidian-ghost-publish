@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/1.0.0...1.1.0) (2026-09-23)
+
+### Features
+
+* **build:** fail the build on a lockfile the catalog review cannot parse ([05cbefd](https://github.com/dsebastien/obsidian-ghost-publish/commit/05cbefd0e4dd213a6b50cec51b9d6e8dbd0aa31c))
+* **build:** make the rule floor check that it is still wired in ([e220dd6](https://github.com/dsebastien/obsidian-ghost-publish/commit/e220dd66a9806a83e0fa56ae0d88c990e43c893f))
+* **build:** refuse commits that loosen the rules instead of fixing the finding ([258fae8](https://github.com/dsebastien/obsidian-ghost-publish/commit/258fae8908dcc62a6834b2ecba686b6cecb23a0f))
+
+### Bug Fixes
+
+* **build:** exclude bun-types alongside @types/bun from the release-age gate ([21f6ab4](https://github.com/dsebastien/obsidian-ghost-publish/commit/21f6ab4c702335dc549c50ddc9e7ae3ab7eedefe))
+* **build:** harden the release path from the template ([9a862cb](https://github.com/dsebastien/obsidian-ghost-publish/commit/9a862cb8fcf4a9b9e1b76ef9babec0819287adf7))
+* **build:** rebuild versions.json from the published releases ([392ab6a](https://github.com/dsebastien/obsidian-ghost-publish/commit/392ab6abed06dc8eab044d7f0f3681e136faf570))
+* **deps:** move the fast-uri override off the vulnerable line ([6c69c5b](https://github.com/dsebastien/obsidian-ghost-publish/commit/6c69c5ba1503aa9616d75a14f2a20f0cbdaadf49))
+* **plugin:** drop async from methods with nothing to await ([63918dd](https://github.com/dsebastien/obsidian-ghost-publish/commit/63918dd61faca435539c81c50c6512252b2d0385))
+
 ## [1.0.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/0.9.0...1.0.0) (2026-08-29)
 
 ### ⚠ BREAKING CHANGES
@@ -140,6 +156,7 @@ uses the declarative settings API introduced in Obsidian 1.13.
 ### Features
 
 * **plugin:** implement Ghost Publish with configurable presets ([abf2e2c](https://github.com/dsebastien/obsidian-ghost-publish/commit/abf2e2cb907220e8793b0198c1d13c41acccadd4))
+
 
 
 
