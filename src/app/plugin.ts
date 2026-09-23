@@ -79,7 +79,7 @@ export class GhostPublishPlugin extends Plugin {
      * Opens the plugin's own page in the global Settings dialog. Used by
      * the panel's empty-state "Open settings" CTA.
      */
-    async openSettingsTab(): Promise<void> {
+    openSettingsTab(): void {
         const settingApi = (
             this.app as unknown as {
                 setting?: { open: () => void; openTabById: (id: string) => void }

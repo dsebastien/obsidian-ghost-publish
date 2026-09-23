@@ -24,6 +24,6 @@ export function renderEmptyState(
         cls: 'mod-cta gp-empty-cta'
     })
     cta.addEventListener('click', () => {
-        void plugin.openSettingsTab()
+        plugin.openSettingsTab()
     })
 }

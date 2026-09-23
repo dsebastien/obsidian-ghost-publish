@@ -70,16 +70,18 @@ export class GhostPublishView extends ItemView {
         this.render()
     }
 
-    override async onOpen(): Promise<void> {
+    override onOpen(): Promise<void> {
         this.render()
+        return Promise.resolve()
     }
 
-    override async onClose(): Promise<void> {
+    override onClose(): Promise<void> {
         if (this.searchRenderTimer !== null) {
             window.clearTimeout(this.searchRenderTimer)
             this.searchRenderTimer = null
         }
         this.contentEl.empty()
+        return Promise.resolve()
     }
 
     private render(): void {
