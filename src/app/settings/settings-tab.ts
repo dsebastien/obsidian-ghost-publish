@@ -277,11 +277,17 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                         name: '',
                         desc: 'Each preset becomes a tab in the panel. Configure tags, newsletter and publishing options per preset.',
                         searchable: false,
-                        render: (setting): void => {
+                        render: (setting): (() => void) => {
                             // `.setting-item` is a flex ROW; the preset list is
                             // a stack of full-width rows.
                             setting.settingEl.addClass('gp-settings-embed')
-                            this.renderPresetsEditor(setting.settingEl)
+                            // In a wrapper removed by the returned cleanup:
+                            // update() (every preset change, every tag refresh)
+                            // re-runs this hook on the SAME row and only resets
+                            // its control area, so the editor would stack.
+                            const editorEl = setting.settingEl.createDiv()
+                            this.renderPresetsEditor(editorEl)
+                            return () => editorEl.remove()
                         }
                     }
                 ]
@@ -310,13 +316,17 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                         name: 'Support',
                         // Not a setting — keep it out of the settings search.
                         searchable: false,
-                        render: (setting): void => {
+                        render: (setting): (() => void) => {
                             setting.infoEl.remove() // the section draws its own headings
                             // `.setting-item` is a flex ROW. The support block
                             // is a stack of full-width rows, so without this it
                             // would lay heading, buttons and badge side by side.
                             setting.settingEl.addClass('gp-settings-embed')
-                            renderSupportSection(setting.settingEl, (el) => {
+                            // In a wrapper removed by the returned cleanup: update() re-runs
+                            // this hook on the SAME row and only resets its control area, so
+                            // content appended straight to settingEl would pile up.
+                            const blockEl = setting.settingEl.createDiv()
+                            renderSupportSection(blockEl, (el) => {
                                 const linkEl = el.createEl('a', {
                                     href: BUY_ME_A_COFFEE_URL
                                 })
@@ -325,6 +335,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                                 imgEl.alt = 'Buy me a coffee'
                                 imgEl.width = 175
                             })
+                            return () => blockEl.remove()
                         }
                     }
                 ]
