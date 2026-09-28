@@ -354,6 +354,40 @@ describe('default settings', () => {
         expect(Object.isFrozen(DEFAULT_SETTINGS.frontmatter)).toBe(false)
     })
 
+    test('loadSettings with stored data lands it without freezing the shared defaults', async () => {
+        const plugin = Object.assign(
+            Object.create(GhostPublishPlugin.prototype) as GhostPublishPlugin,
+            {
+                settings: produce(createDefaultSettings(), () => {}),
+                loadData: (): Promise<unknown> =>
+                    Promise.resolve({
+                        ghostUrl: 'https://blog.example.com',
+                        stripSections: ['Private'],
+                        frontmatter: { flag: 'publish_me' }
+                    })
+            }
+        )
+
+        await plugin.loadSettings()
+
+        expect(plugin.settings.ghostUrl).toBe('https://blog.example.com')
+        expect(plugin.settings.stripSections).toEqual(['Private'])
+        expect(plugin.settings.frontmatter).toEqual({ ...DEFAULT_FRONTMATTER, flag: 'publish_me' })
+        expect(plugin.settings.presets).toEqual([])
+        expect(plugin.settings.knownUrls).toEqual({})
+        expect(Object.isFrozen(plugin.settings)).toBe(true)
+        // The values the stored data leaves out are shared with the produce
+        // base and deep-frozen with the result: a DEFAULT_SETTINGS base froze
+        // its untouched nested values.
+        expect(Object.isFrozen(DEFAULT_SETTINGS)).toBe(false)
+        expect(Object.isFrozen(DEFAULT_SETTINGS.presets)).toBe(false)
+        expect(Object.isFrozen(DEFAULT_SETTINGS.knownUrls)).toBe(false)
+        expect(Object.isFrozen(DEFAULT_SETTINGS.excludedFolders)).toBe(false)
+        expect(Object.isFrozen(DEFAULT_SETTINGS.cachedTags)).toBe(false)
+        expect(Object.isFrozen(DEFAULT_SETTINGS.frontmatter)).toBe(false)
+        expect(Object.isFrozen(DEFAULT_FRONTMATTER)).toBe(false)
+    })
+
     test('each default settings object is an independent copy', () => {
         const one = createDefaultSettings()
         one.presets.push(newPreset('id-1', 'One'))
