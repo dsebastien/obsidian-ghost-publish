@@ -284,7 +284,8 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                             // In a wrapper removed by the returned cleanup:
                             // update() (every preset change, every tag refresh)
                             // re-runs this hook on the SAME row and only resets
-                            // its control area, so the editor would stack.
+                            // its name, description and control area, so the
+                            // editor would stack.
                             const editorEl = setting.settingEl.createDiv()
                             this.renderPresetsEditor(editorEl)
                             return () => editorEl.remove()
@@ -323,8 +324,8 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                             // would lay heading, buttons and badge side by side.
                             setting.settingEl.addClass('gp-settings-embed')
                             // In a wrapper removed by the returned cleanup: update() re-runs
-                            // this hook on the SAME row and only resets its control area, so
-                            // content appended straight to settingEl would pile up.
+                            // this hook on the SAME row and only resets its name, description
+                            // and control area, so content appended to settingEl would pile up.
                             const blockEl = setting.settingEl.createDiv()
                             renderSupportSection(blockEl, (el) => {
                                 const linkEl = el.createEl('a', {
