@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1](https://github.com/dsebastien/obsidian-ghost-publish/compare/1.1.0...1.1.1) (2026-09-28)
+
+### Bug Fixes
+
+* **plugin:** keep the support block from stacking on every settings refresh ([ce1143d](https://github.com/dsebastien/obsidian-ghost-publish/commit/ce1143d6f9f959b50ba15101a6ea041e8a9bf30a))
+
 ## [1.1.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/1.0.0...1.1.0) (2026-09-23)
 
 ### Features
@@ -156,6 +162,7 @@ uses the declarative settings API introduced in Obsidian 1.13.
 ### Features
 
 * **plugin:** implement Ghost Publish with configurable presets ([abf2e2c](https://github.com/dsebastien/obsidian-ghost-publish/commit/abf2e2cb907220e8793b0198c1d13c41acccadd4))
+
 
 
 
