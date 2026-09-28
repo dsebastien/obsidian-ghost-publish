@@ -1,7 +1,7 @@
 import { Notice, Plugin } from 'obsidian'
 import { produce } from 'immer'
 import type { Draft } from 'immer'
-import { DEFAULT_FRONTMATTER, DEFAULT_SETTINGS } from './types/plugin-settings.intf'
+import { DEFAULT_FRONTMATTER, createDefaultSettings } from './types/plugin-settings.intf'
 import type { FrontmatterPropertyNames, PluginSettings } from './types/plugin-settings.intf'
 import type { Preset } from './types/preset.intf'
 import type { GhostNewsletterSummary, GhostTagSummary } from './types/ghost-api.intf'
@@ -22,7 +22,7 @@ import { registerWhatsNewView } from './whats-new'
 export class GhostPublishPlugin extends Plugin {
     // No `override`: `Plugin.settings` only exists in API 1.13+ typings and the
     // plugin supports older public releases.
-    override settings: PluginSettings = produce(DEFAULT_SETTINGS, () => DEFAULT_SETTINGS)
+    override settings: PluginSettings = produce(createDefaultSettings(), () => {})
 
     override async onload(): Promise<void> {
         // Must run before anything can call saveData (fresh-install detection)
@@ -156,7 +156,7 @@ export class GhostPublishPlugin extends Plugin {
         const loaded = (await this.loadData()) as Partial<PluginSettings> | null
 
         if (!loaded) {
-            this.settings = produce(DEFAULT_SETTINGS, () => DEFAULT_SETTINGS)
+            this.settings = produce(createDefaultSettings(), () => {})
             return
         }
 

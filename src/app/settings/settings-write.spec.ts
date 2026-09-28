@@ -1,8 +1,13 @@
 import { describe, expect, test, mock } from 'bun:test'
 import { produce } from 'immer'
+import type { App, PluginManifest } from 'obsidian'
 import { GhostPublishPlugin } from '../plugin'
 import { GhostPublishSettingTab } from './settings-tab'
-import { DEFAULT_SETTINGS } from '../types/plugin-settings.intf'
+import {
+    DEFAULT_FRONTMATTER,
+    DEFAULT_SETTINGS,
+    createDefaultSettings
+} from '../types/plugin-settings.intf'
 import { newPreset } from '../types/preset.intf'
 
 /**
@@ -51,7 +56,7 @@ function createHarness(options?: { saveData?: () => Promise<void> }): Harness {
 
     const plugin = Object.create(GhostPublishPlugin.prototype) as GhostPublishPlugin
     const internals = plugin as unknown as Record<string, unknown>
-    internals['settings'] = produce(DEFAULT_SETTINGS, () => DEFAULT_SETTINGS)
+    internals['settings'] = produce(createDefaultSettings(), () => {})
     internals['settingsWriteChain'] = Promise.resolve()
     internals['saveData'] = saveData
     internals['refreshView'] = refreshView
@@ -313,5 +318,51 @@ describe('preset structural edits', () => {
         await settle()
 
         expect(retryGate.plugin.settings.presets.map((p) => p.id)).toEqual(['id-2'])
+    })
+})
+
+describe('default settings', () => {
+    test('constructing the plugin never freezes the shared defaults', () => {
+        const plugin = new GhostPublishPlugin({} as App, {} as PluginManifest)
+        expect(Object.isFrozen(plugin.settings)).toBe(true)
+        expect(Object.isFrozen(DEFAULT_SETTINGS)).toBe(false)
+        expect(Object.isFrozen(DEFAULT_SETTINGS.presets)).toBe(false)
+        expect(Object.isFrozen(DEFAULT_SETTINGS.frontmatter)).toBe(false)
+        expect(Object.isFrozen(DEFAULT_SETTINGS.knownUrls)).toBe(false)
+        expect(Object.isFrozen(DEFAULT_FRONTMATTER)).toBe(false)
+    })
+
+    test('loadSettings with no stored data never freezes the shared defaults', async () => {
+        // Skip the constructor: its field initializer is the other test's case.
+        const plugin = Object.assign(
+            Object.create(GhostPublishPlugin.prototype) as GhostPublishPlugin,
+            {
+                settings: produce(createDefaultSettings(), () => {}),
+                loadData: (): Promise<unknown> => Promise.resolve(null)
+            }
+        )
+
+        await plugin.loadSettings()
+
+        // Immer deep-freezes what produce returns, including subtrees shared
+        // with its base: producing from DEFAULT_SETTINGS froze the constant
+        // for the rest of the process.
+        expect(plugin.settings).toEqual(DEFAULT_SETTINGS)
+        expect(Object.isFrozen(plugin.settings)).toBe(true)
+        expect(Object.isFrozen(DEFAULT_SETTINGS)).toBe(false)
+        expect(Object.isFrozen(DEFAULT_SETTINGS.presets)).toBe(false)
+        expect(Object.isFrozen(DEFAULT_SETTINGS.frontmatter)).toBe(false)
+    })
+
+    test('each default settings object is an independent copy', () => {
+        const one = createDefaultSettings()
+        one.presets.push(newPreset('id-1', 'One'))
+        one.frontmatter.flag = 'changed'
+        one.knownUrls['a'] = 'b'
+        const two = createDefaultSettings()
+        expect(two.presets).toEqual([])
+        expect(two.frontmatter).toEqual(DEFAULT_FRONTMATTER)
+        expect(two.knownUrls).toEqual({})
+        expect(DEFAULT_SETTINGS.frontmatter).not.toBe(DEFAULT_FRONTMATTER)
     })
 })
