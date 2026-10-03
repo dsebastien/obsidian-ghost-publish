@@ -8,16 +8,31 @@ import { regenerateListingNote } from './news-feed-writer'
 import { emptySummary } from '../types/sync-result.intf'
 import type { SyncResult, SyncSummary } from '../types/sync-result.intf'
 import { log } from '../../utils/log'
+import { readAdminKey } from './admin-key-secret'
 
 /**
- * Resolve the Ghost Admin key: prefer the plugin setting, fall back to the
- * GHOST_ADMIN_KEY environment variable. Trims whitespace.
+ * Resolve the Ghost Admin key at use time: the SecretStorage entry named in
+ * settings first, the legacy plain-text copy (grace period) second, the
+ * GHOST_ADMIN_KEY environment variable last. Trims whitespace. Never cached.
  */
-export function resolveAdminKey(settings: PluginSettings): string {
-    if (settings.ghostAdminKey.trim()) return settings.ghostAdminKey.trim()
+export function resolveAdminKey(app: App, settings: PluginSettings): string {
+    const key = readAdminKey(app.secretStorage, settings)
+    if (key) return key
     const env =
         typeof process !== 'undefined' && process.env ? (process.env['GHOST_ADMIN_KEY'] ?? '') : ''
     return env.trim()
+}
+
+/**
+ * Label for a missing admin key. SecretStorage is device-local, so a vault
+ * synced from another device carries the secret name but not its value: say
+ * which secret to set on this device.
+ */
+export function missingAdminKeyLabel(settings: PluginSettings): string {
+    const name = settings.ghostAdminKeySecretName.trim()
+    return name
+        ? `Ghost Admin API key (secret "${name}" is not set on this device)`
+        : 'Ghost Admin API key'
 }
 
 export class MissingGhostConfigError extends Error {
@@ -27,11 +42,11 @@ export class MissingGhostConfigError extends Error {
     }
 }
 
-export function buildGhostClient(settings: PluginSettings): GhostApiClient {
+export function buildGhostClient(app: App, settings: PluginSettings): GhostApiClient {
     const missing: string[] = []
     if (!settings.ghostUrl.trim()) missing.push('Ghost URL')
-    const key = resolveAdminKey(settings)
-    if (!key) missing.push('Ghost Admin API key')
+    const key = resolveAdminKey(app, settings)
+    if (!key) missing.push(missingAdminKeyLabel(settings))
     if (missing.length > 0) {
         throw new MissingGhostConfigError(missing)
     }
@@ -49,7 +64,7 @@ export async function publishAllForPreset(
     preset: Preset,
     onProgress?: (current: number, total: number, lastResult: SyncResult) => void
 ): Promise<{ results: SyncResult[]; summary: SyncSummary }> {
-    const client = buildGhostClient(settings)
+    const client = buildGhostClient(app, settings)
     const queue = findQueuedNotesForPreset(app, settings, preset.id)
     const summary = emptySummary()
     const results: SyncResult[] = []

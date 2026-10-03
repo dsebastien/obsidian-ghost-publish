@@ -1,4 +1,4 @@
-import { Notice, PluginSettingTab, Setting, setIcon } from 'obsidian'
+import { Notice, PluginSettingTab, SecretComponent, Setting, setIcon } from 'obsidian'
 import type { App, SettingDefinitionItem } from 'obsidian'
 import type { GhostPublishPlugin } from '../plugin'
 import type { PluginSettings } from '../types/plugin-settings.intf'
@@ -6,6 +6,7 @@ import { DEFAULT_FRONTMATTER } from '../types/plugin-settings.intf'
 import { newPreset } from '../types/preset.intf'
 import type { Preset } from '../types/preset.intf'
 import { refreshGhostMetadata } from '../services/ghost-metadata-cache'
+import { resolveAdminKey } from '../services/publish-service'
 import { PresetEditorModal } from './preset-editor-modal'
 import { ConfirmModal } from './confirm-modal'
 import { BUY_ME_A_COFFEE_BADGE_DATA_URL } from '../assets/buy-me-a-coffee'
@@ -127,31 +128,73 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                     },
                     {
                         name: 'Ghost Admin API key',
-                        desc: 'Format: id:secret. Falls back to the GHOST_ADMIN_KEY environment variable when empty. Create one in Ghost Admin → Settings → Integrations.',
-                        // A render: row, not a text control: the declarative
-                        // text control cannot render a password input, and the
-                        // key must never be shown in clear text.
+                        desc: 'Pick or create the secret holding your key (format: id:secret, from Ghost Admin → Settings → Integrations). Secrets live in secret storage on this device and are never synced with the vault. Falls back to the GHOST_ADMIN_KEY environment variable.',
+                        // A render: row: the key lives in SecretStorage, and
+                        // only the secret NAME is stored in settings. The
+                        // SecretComponent never shows the key in clear text.
                         render: (setting): void => {
-                            setting.addText((text) => {
-                                text.inputEl.type = 'password'
-                                text.setPlaceholder('id:secret')
-                                    .setValue(this.plugin.settings.ghostAdminKey)
+                            const name = this.plugin.settings.ghostAdminKeySecretName
+                            if (!resolveAdminKey(this.app, this.plugin.settings)) {
+                                // SecretStorage is device-local: a synced
+                                // data.json may carry a name with no value
+                                // here. Say so instead of failing at publish.
+                                setting.descEl.createDiv({
+                                    cls: 'mod-warning',
+                                    text: name
+                                        ? `The secret "${name}" is not set on this device. Set it here once.`
+                                        : 'No secret selected.'
+                                })
+                            }
+                            setting.addComponent((el) =>
+                                new SecretComponent(this.app, el)
+                                    .setValue(name)
                                     .onChange((value) => {
                                         void this.plugin
-                                            .updateSettings((d) => {
-                                                d.ghostAdminKey = value.trim()
-                                            })
+                                            .setAdminKeySecretName(value)
+                                            .then(() => this.update())
                                             .catch(() => {
-                                                // Roll the input back to the
-                                                // stored truth: leaving the
-                                                // typed value visible would
-                                                // show a key that is not the
-                                                // one actually used for
-                                                // publishing.
-                                                text.setValue(this.plugin.settings.ghostAdminKey)
                                                 new Notice('Failed to save settings.')
+                                                this.update()
                                             })
                                     })
+                            )
+                            setting.addButton((b) => {
+                                b.setButtonText('Forget key')
+                                b.setDestructive()
+                                b.onClick(() => {
+                                    new ConfirmModal(
+                                        this.app,
+                                        'Forget key',
+                                        'Clear the key from this device’s secret storage and remove the plain-text copy from the plugin data? Synced devices that still rely on that copy will need the key again.',
+                                        () => {
+                                            void this.plugin
+                                                .forgetAdminKey()
+                                                .catch(() => {
+                                                    new Notice('Failed to save settings.')
+                                                })
+                                                .finally(() => this.update())
+                                        }
+                                    ).open()
+                                })
+                            })
+                        }
+                    },
+                    {
+                        name: 'Remove plain-text copy now',
+                        desc: 'Older versions kept the key in plain text in the plugin data, which syncs with your vault. It is kept for 60 days so each of your devices can move it to its own secret storage, then removed automatically. Remove it now once all your devices run this version.',
+                        visible: (): boolean =>
+                            (this.plugin.settings.ghostAdminKey ?? '').trim().length > 0,
+                        render: (setting): void => {
+                            setting.addButton((b) => {
+                                b.setButtonText('Remove')
+                                b.onClick(() => {
+                                    void this.plugin
+                                        .removeLegacyAdminKeyCopy()
+                                        .catch(() => {
+                                            new Notice('Failed to save settings.')
+                                        })
+                                        .finally(() => this.update())
+                                })
                             })
                         }
                     }
@@ -534,7 +577,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
             // land would fetch (and then persist) another account's cache next
             // to the new connection settings.
             await this.plugin.updateSettings(() => {})
-            const result = await refreshGhostMetadata(this.plugin.settings)
+            const result = await refreshGhostMetadata(this.app, this.plugin.settings)
             await this.plugin.updateSettings((d) => {
                 d.cachedTags = result.tags
                 d.cachedNewsletters = result.newsletters

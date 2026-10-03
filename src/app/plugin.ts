@@ -15,7 +15,13 @@ import {
     VIEW_TYPE_GHOST_PUBLISH
 } from './constants'
 import { GhostPublishView } from './views/ghost-publish-view'
-import { MissingGhostConfigError, publishAllForPreset } from './services/publish-service'
+import {
+    MissingGhostConfigError,
+    missingAdminKeyLabel,
+    publishAllForPreset,
+    resolveAdminKey
+} from './services/publish-service'
+import { bootstrapAdminKey, readSecret } from './services/admin-key-secret'
 import { log } from '../utils/log'
 import { registerWhatsNewView } from './whats-new'
 
@@ -29,6 +35,7 @@ export class GhostPublishPlugin extends Plugin {
         registerWhatsNewView(this)
         log('Initializing', 'debug')
         await this.loadSettings()
+        this.warnIfAdminKeyMissing()
 
         this.registerView(VIEW_TYPE_GHOST_PUBLISH, (leaf) => new GhostPublishView(leaf, this))
 
@@ -162,7 +169,8 @@ export class GhostPublishPlugin extends Plugin {
 
         this.settings = produce(this.settings, (draft: Draft<PluginSettings>) => {
             if (typeof loaded.ghostUrl === 'string') draft.ghostUrl = loaded.ghostUrl
-            if (typeof loaded.ghostAdminKey === 'string') draft.ghostAdminKey = loaded.ghostAdminKey
+            if (typeof loaded.ghostAdminKeySecretName === 'string')
+                draft.ghostAdminKeySecretName = loaded.ghostAdminKeySecretName.trim()
             if (typeof loaded.notesBaseUrl === 'string') draft.notesBaseUrl = loaded.notesBaseUrl
 
             if (Array.isArray(loaded.stripSections)) {
@@ -205,6 +213,75 @@ export class GhostPublishPlugin extends Plugin {
             if (Array.isArray(loaded.presets)) {
                 draft.presets = loaded.presets.filter(isPresetLike).map((p) => sanitizePreset(p))
             }
+        })
+
+        // Per-device bootstrap of the legacy plain-text key into this
+        // device's SecretStorage (see services/admin-key-secret.ts).
+        let adminKeyChanged = false
+        this.settings = produce(this.settings, (draft) => {
+            if (typeof loaded.ghostAdminKey === 'string') draft.ghostAdminKey = loaded.ghostAdminKey
+            else delete draft.ghostAdminKey
+            if (typeof loaded.legacySecretMigratedAt === 'string')
+                draft.legacySecretMigratedAt = loaded.legacySecretMigratedAt
+            else delete draft.legacySecretMigratedAt
+            if (draft.ghostAdminKey !== undefined) {
+                adminKeyChanged = bootstrapAdminKey(this.app.secretStorage, draft, new Date())
+            }
+        })
+        if (adminKeyChanged) await this.saveSettings()
+    }
+
+    /**
+     * SecretStorage is device-local: a data.json synced from another device
+     * carries the secret name but not the key. Tell the user instead of
+     * failing silently at publish time. Only for a configured connection.
+     */
+    private warnIfAdminKeyMissing(): void {
+        if (!this.settings.ghostUrl.trim()) return
+        if (resolveAdminKey(this.app, this.settings)) return
+        new Notice(
+            `Ghost Publish: ${missingAdminKeyLabel(this.settings)}. Set it in Settings → Ghost Publish.`,
+            NOTICE_TIMEOUT_MS
+        )
+    }
+
+    /**
+     * Point the admin key at another secret (settings UI). Treated as a
+     * rotation: the legacy plain-text copy is stale now and is dropped.
+     */
+    setAdminKeySecretName(name: string): Promise<void> {
+        return this.updateSettings((d) => {
+            d.ghostAdminKeySecretName = name.trim()
+            delete d.ghostAdminKey
+        })
+    }
+
+    /**
+     * "Forget key": clear this device's secret (SecretStorage has no delete;
+     * '' reads as absent) and drop the legacy plain-text copy, which signs
+     * every synced device out, as clearing the field did before.
+     */
+    async forgetAdminKey(): Promise<void> {
+        const name = this.settings.ghostAdminKeySecretName.trim()
+        if (name) this.app.secretStorage.setSecret(name, '')
+        await this.updateSettings((d) => {
+            delete d.ghostAdminKey
+        })
+    }
+
+    /**
+     * "Remove plain-text copy now": drop the legacy field before the grace
+     * period ends. Copies it into this device's SecretStorage first so this
+     * device keeps working.
+     */
+    async removeLegacyAdminKeyCopy(): Promise<void> {
+        const legacy = (this.settings.ghostAdminKey ?? '').trim()
+        const name = this.settings.ghostAdminKeySecretName.trim()
+        if (legacy && name && !readSecret(this.app.secretStorage, name)) {
+            this.app.secretStorage.setSecret(name, legacy)
+        }
+        await this.updateSettings((d) => {
+            delete d.ghostAdminKey
         })
     }
 

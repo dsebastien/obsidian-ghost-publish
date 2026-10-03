@@ -18,7 +18,9 @@ This document defines the core business rules. These MUST be respected unless ex
 
 ## Auth
 
-- **BR-AUTH-1**: Admin key resolution order is **settings field first, env var (`GHOST_ADMIN_KEY`) second**. Empty/whitespace-only setting falls through to env.
+- **BR-AUTH-1**: Admin key resolution order is **SecretStorage (secret named by `ghostAdminKeySecretName`) first, legacy plain-text `ghostAdminKey` second (grace period only), env var (`GHOST_ADMIN_KEY`) last**. Empty/whitespace-only values fall through.
+- **BR-AUTH-3**: The admin key is never written to data.json. Settings store only the secret name. The legacy plain-text field is read-only: kept as a per-device bootstrap source for 60 days after the first migration (so every synced device migrates with zero action), then dropped; also dropped on rotation, **Forget key**, or **Remove plain-text copy now**. Migration never overwrites a different existing secret.
+- **BR-AUTH-4**: A missing key on a device (no secret, no legacy copy, no env) shows a "set it on this device" Notice (on load, when a Ghost URL is configured) and a settings hint. Never invent a key.
 - **BR-AUTH-2**: JWTs are signed via Web Crypto (`crypto.subtle`). Never import Node's `crypto`.
 
 ## Network

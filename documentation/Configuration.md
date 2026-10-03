@@ -10,7 +10,12 @@ User-facing settings are documented in `docs/configuration.md`. This file covers
 
 ## Environment
 
-- `GHOST_ADMIN_KEY`: read as a fallback when the settings field is empty. Trimmed before use.
+- `GHOST_ADMIN_KEY`: read as a fallback when neither the secret nor the legacy plain-text copy is set. Trimmed before use.
+
+## Secrets
+
+- The Ghost Admin API key lives in Obsidian SecretStorage (`app.secretStorage`, device-local, API 1.11.4+). data.json stores only `ghostAdminKeySecretName` (default `ghost-publish-admin-key`). UI: `SecretComponent` in a `render:` row.
+- Legacy `ghostAdminKey` (plain text, ≤ 1.1.1) is a read-only per-device bootstrap source, never written with a new value; dropped 60 days after `legacySecretMigratedAt`, on rotation, on **Forget key**, or via **Remove plain-text copy now**. See `services/admin-key-secret.ts`.
 - `OBSIDIAN_VAULT_LOCATION`: read by the dev build script (`scripts/build.ts`) to auto-copy the dist into the vault. Not read at runtime.
 
 ## Settings shape
@@ -19,7 +24,9 @@ User-facing settings are documented in `docs/configuration.md`. This file covers
 interface PluginSettings {
     // Global Ghost config
     ghostUrl: string
-    ghostAdminKey: string
+    ghostAdminKeySecretName: string // SecretStorage id; never the key
+    ghostAdminKey?: string // LEGACY plain text, grace-period bootstrap only
+    legacySecretMigratedAt?: string // ISO date of first migration
 
     // Public mirror (optional)
     notesBaseUrl: string

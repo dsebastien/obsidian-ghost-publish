@@ -477,9 +477,11 @@ write-path behavior.
 
 Repo-specific shapes, decided deliberately:
 
-- The Ghost Admin API key is a `render:` row because the declarative text
-  control cannot render a password input; the key must never appear in clear
-  text.
+- The Ghost Admin API key is a `render:` row hosting a `SecretComponent`:
+  the key lives in Obsidian SecretStorage and settings store only the secret
+  name (see `services/admin-key-secret.ts`). Never write a key value to
+  data.json; the legacy plain-text `ghostAdminKey` is a read-only bootstrap
+  source until its 60-day purge.
 - The preset list keeps its custom row UI (enable toggle, move, edit-in-modal,
   confirmed delete) inside one `render:` row: the native list's delete
   affordance would bypass the confirmation modal. Structural preset edits are

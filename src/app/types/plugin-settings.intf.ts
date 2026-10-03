@@ -1,4 +1,5 @@
 import type { Preset } from './preset.intf'
+import { DEFAULT_ADMIN_KEY_SECRET_NAME } from '../services/admin-key-secret'
 import type { GhostNewsletterSummary, GhostTagSummary } from './ghost-api.intf'
 
 /**
@@ -12,7 +13,19 @@ import type { GhostNewsletterSummary, GhostTagSummary } from './ghost-api.intf'
 export interface PluginSettings {
     // ─── Ghost connection ───────────────────────────────────────────────────
     ghostUrl: string
-    ghostAdminKey: string
+    /**
+     * NAME of the Obsidian SecretStorage entry holding the Ghost Admin API
+     * key. Never the key itself: data.json travels with the vault.
+     */
+    ghostAdminKeySecretName: string
+    /**
+     * LEGACY plain-text key written by versions up to 1.1.1. Kept read-only
+     * as a per-device bootstrap source during the grace period, never
+     * written with a new value. See services/admin-key-secret.ts.
+     */
+    ghostAdminKey?: string
+    /** ISO date of the first migration to SecretStorage (grace period start). */
+    legacySecretMigratedAt?: string
 
     // ─── Public mirror (for canonical_url presets) ──────────────────────────
     notesBaseUrl: string
@@ -85,7 +98,7 @@ export const DEFAULT_FRONTMATTER: FrontmatterPropertyNames = {
 export function createDefaultSettings(): PluginSettings {
     return {
         ghostUrl: '',
-        ghostAdminKey: '',
+        ghostAdminKeySecretName: DEFAULT_ADMIN_KEY_SECRET_NAME,
         notesBaseUrl: '',
         stripSections: [],
         knownUrls: {},

@@ -104,7 +104,7 @@ src/
 
 Globals (shared by all presets):
 
-- Ghost connection (URL, admin key).
+- Ghost connection (URL, admin key secret name).
 - Notes base URL (for canonical URLs + wikilink resolution).
 - Triage filters (excluded folders, MoC tag).
 - Content processing (strip sections, known URL map).
@@ -126,7 +126,8 @@ Per preset:
 ## Auth
 
 - JWT signing uses Web Crypto (`crypto.subtle.importKey('raw', …)` + `crypto.subtle.sign('HMAC', …)`).
-- Admin key resolves from `settings.ghostAdminKey` first, then `process.env.GHOST_ADMIN_KEY`.
+- Admin key resolves at use time (`resolveAdminKey(app, settings)` → `services/admin-key-secret.ts`): `app.secretStorage.getSecret(settings.ghostAdminKeySecretName)` first, then the legacy plain-text `settings.ghostAdminKey` (grace period; copied into SecretStorage on read), then `process.env.GHOST_ADMIN_KEY`. Never cached.
+- Legacy migration (`bootstrapAdminKey`, run in `loadSettings` on every device): copies the legacy plain-text key into this device's SecretStorage when absent; the first migration claims a name (never overwriting a different secret: `-2`, `-3` suffixes) and records `legacySecretMigratedAt`; the legacy field is dropped after 60 days, on rotation (`setAdminKeySecretName`), on `forgetAdminKey`, or via `removeLegacyAdminKeyCopy`.
 - `isDesktopOnly: true` because the env fallback uses `process.env`.
 
 ## Network

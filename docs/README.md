@@ -22,7 +22,7 @@ Publish your vault notes to a Ghost blog. Define one or more **presets** (e.g. "
 ## Quick start
 
 1. Install and enable the plugin.
-2. **Settings → Ghost Publish**: fill in Ghost URL + Admin API key, then **Refresh tags & newsletters**.
+2. **Settings → Ghost Publish**: fill in Ghost URL, pick or create the secret holding your Admin API key, then **Refresh tags & newsletters**.
 3. Click **Add preset**, give it a name, pick tags / newsletter, save.
 4. Open the panel from the ribbon (paper-plane icon).
 5. Triage → Queue → Sync.

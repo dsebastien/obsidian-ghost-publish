@@ -50,7 +50,7 @@ If you already use a specific naming convention, set the frontmatter properties 
 
 ### "Missing Ghost configuration"
 
-Fill in Ghost URL and Admin API key in settings. The Admin key can come from `GHOST_ADMIN_KEY` if you'd prefer to keep it out of the plugin data file.
+Fill in Ghost URL and Admin API key in settings. The key is kept in Obsidian's secret storage, which is per device: if the message says the secret is not set on this device, set it once in **Settings → Ghost Publish**. The key can also come from `GHOST_ADMIN_KEY`.
 
 ### "canonical URL not reachable"
 

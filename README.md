@@ -36,7 +36,7 @@ Manual install:
 
 ## Quick start
 
-1. Open **Settings → Ghost Publish**: fill in **Ghost URL** and the **Admin API key** (`id:secret` from Ghost Admin → Settings → Integrations).
+1. Open **Settings → Ghost Publish**: fill in **Ghost URL** and pick or create the secret holding your **Admin API key** (`id:secret` from Ghost Admin → Settings → Integrations). The key is stored in Obsidian's secret storage on each device, never in the synced plugin data.
 2. Click **Refresh tags & newsletters** to populate the autocomplete cache.
 3. Add a preset (e.g. "Blog post"): pick tags, optionally a newsletter, status, canonical URL strategy.
 4. Open the panel (the **send** ribbon icon).
@@ -48,7 +48,7 @@ This plugin is desktop-only and makes network requests **only to the Ghost site 
 
 External services used:
 
-- **Ghost Admin API** at your configured Ghost URL — for creating / updating posts, fetching tags & newsletters, uploading embedded images, and triggering optional newsletter dispatches. Authentication uses an Admin API key you provide (either pasted into settings or read from the `GHOST_ADMIN_KEY` environment variable).
+- **Ghost Admin API** at your configured Ghost URL — for creating / updating posts, fetching tags & newsletters, uploading embedded images, and triggering optional newsletter dispatches. Authentication uses an Admin API key you provide (kept in Obsidian's device-local secret storage, or read from the `GHOST_ADMIN_KEY` environment variable).
 - **Public mirror URL** (optional, per preset) — when a preset enables `canonical_url`, the plugin performs a HEAD/GET probe against the canonical URL to verify the public version is reachable before publishing. No vault content is sent in this probe.
 
 The plugin never executes remote code and updates only through normal Obsidian releases.

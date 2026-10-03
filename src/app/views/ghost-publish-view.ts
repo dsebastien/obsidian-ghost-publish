@@ -8,7 +8,7 @@ import { renderTriagePage } from './pages/triage-page'
 import { renderQueuePage } from './pages/queue-page'
 import { renderRecentlyPublishedPage } from './pages/recently-published-page'
 import { renderEmptyState } from './pages/empty-state-page'
-import { resolveAdminKey } from '../services/publish-service'
+import { missingAdminKeyLabel, resolveAdminKey } from '../services/publish-service'
 import type { Preset } from '../types/preset.intf'
 import type { TriageRangeId } from '../types/news-candidate.intf'
 
@@ -283,7 +283,7 @@ export class GhostPublishView extends ItemView {
         const s = this.plugin.settings
         const missing: string[] = []
         if (!s.ghostUrl.trim()) missing.push('Ghost URL')
-        if (!resolveAdminKey(s)) missing.push('Admin API key')
+        if (!resolveAdminKey(this.app, s)) missing.push(missingAdminKeyLabel(s))
         return missing
     }
 

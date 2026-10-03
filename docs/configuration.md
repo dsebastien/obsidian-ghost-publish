@@ -13,10 +13,19 @@ Open **Settings → Ghost Publish**. Settings persist via the standard `loadData
 
 ## Ghost
 
-| Setting                 | Type | Default | Description                                                                                      |
-| ----------------------- | ---- | ------- | ------------------------------------------------------------------------------------------------ |
-| **Ghost URL**           | text | `""`    | Your Ghost site base URL, e.g. `https://example.ghost.io`. No trailing slash.                    |
-| **Ghost Admin API key** | text | `""`    | `id:secret` from Ghost Admin → Settings → Integrations. Falls back to `GHOST_ADMIN_KEY` env var. |
+| Setting                 | Type   | Default                   | Description                                                                                                                                                                          |
+| ----------------------- | ------ | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Ghost URL**           | text   | `""`                      | Your Ghost site base URL, e.g. `https://example.ghost.io`. No trailing slash.                                                                                                        |
+| **Ghost Admin API key** | secret | `ghost-publish-admin-key` | Pick or create the Obsidian secret holding `id:secret` (Ghost Admin → Settings → Integrations). Only the secret's name is saved in the plugin data. Falls back to `GHOST_ADMIN_KEY`. |
+
+### Where the key is stored
+
+The key lives in Obsidian's **secret storage**, which stays on each device and is never synced with your vault. The plugin data file (`data.json`) only keeps the secret's name.
+
+- **Upgrading from 1.1.1 or earlier**: each device copies the old plain-text key into its own secret storage the next time it starts. Nothing to do, every device stays connected.
+- The plain-text copy is removed from the plugin data 60 days after the first device migrated it. To remove it sooner, select **Remove plain-text copy now** once all your devices run this version.
+- Picking another secret removes the plain-text copy right away. **Forget key** clears the key from this device's secret storage and removes the plain-text copy.
+- On a new device (or after the plain-text copy is gone), the settings show a hint until you set the secret on that device once.
 
 ## Public mirror (optional)
 
