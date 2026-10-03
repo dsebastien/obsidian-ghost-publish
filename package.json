@@ -1,6 +1,6 @@
 {
     "name": "obsidian-ghost-publish",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "description": "Publish your vault notes to a Ghost blog with configurable presets for tags, newsletters, and frontmatter conventions.",
     "author": {
         "name": "Sébastien Dubois",
