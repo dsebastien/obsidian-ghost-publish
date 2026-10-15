@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1](https://github.com/dsebastien/obsidian-ghost-publish/compare/1.2.0...1.2.1) (2026-10-15)
+
+### Bug Fixes
+
+* **sync:** stop rewriting the synced-at timestamp on notes that have not changed ([53a1702](https://github.com/dsebastien/obsidian-ghost-publish/commit/53a1702b6ac9e355e441b3eb87d62a2ec17de301))
+
 ## [1.2.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/1.1.1...1.2.0) (2026-10-03)
 
 ### Your Ghost Admin API key is now kept in Obsidian's secret storage
@@ -173,6 +179,7 @@ uses the declarative settings API introduced in Obsidian 1.13.
 ### Features
 
 * **plugin:** implement Ghost Publish with configurable presets ([abf2e2c](https://github.com/dsebastien/obsidian-ghost-publish/commit/abf2e2cb907220e8793b0198c1d13c41acccadd4))
+
 
 
 

@@ -1,5 +1,11 @@
 # Release Notes
 
+## 1.2.1 (2026-10-15)
+
+### Bug Fixes
+
+- **sync:** stop rewriting the synced-at timestamp on notes that have not changed
+
 ## 1.2.0 (2026-10-03)
 
 ### Your Ghost Admin API key is now kept in Obsidian's secret storage
