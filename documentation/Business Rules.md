@@ -33,7 +33,7 @@ This document defines the core business rules. These MUST be respected unless ex
 - **BR-SYNC-1**: Idempotency is enforced via SHA-256 of the note body (frontmatter excluded). Matching `frontmatter.contentHash` short-circuits to `unchanged`.
 - **BR-SYNC-2**: `frontmatter.ghostId` is the source of truth for "this note has been pushed to Ghost". When set, the sync updates; on 404 it recreates and overwrites the id.
 - **BR-SYNC-3**: Newsletter dispatch fires **exactly once per note** — the first sync where the preset has a newsletter AND the email flag is set AND `emailedAt` is unset. `emailedAt` is never cleared by the plugin.
-- **BR-SYNC-4**: `date_published` is set once (never overwritten); `date_updated` and `syncedAt` refresh on every successful sync.
+- **BR-SYNC-4**: `date_published` is set once (never overwritten); `date_updated` and `syncedAt` refresh on every successful sync that pushes to Ghost. An `unchanged` short-circuit writes nothing to the note.
 - **BR-SYNC-5**: A failed sync of one note must not block subsequent notes. The orchestrator captures the error into a `SyncResult` of status `failed`.
 - **BR-SYNC-6**: The canonical-URL probe is opt-in **per preset** (`canonicalUrlEnabled`). When opted in, it can be globally bypassed via the `skipCanonicalProbe` setting.
 

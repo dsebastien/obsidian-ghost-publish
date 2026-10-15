@@ -73,10 +73,9 @@ export async function syncNote(
     const existingHash =
         typeof fm[fmKeys.contentHash] === 'string' ? (fm[fmKeys.contentHash] as string) : ''
 
+    // Unchanged: leave the note untouched. Rewriting syncedAt here would dirty
+    // every published note on each run (git noise, sync churn).
     if (existingGhostId && existingHash === contentHash) {
-        await app.fileManager.processFrontMatter(file, (frontmatter: Record<string, unknown>) => {
-            frontmatter[fmKeys.syncedAt] = new Date().toISOString()
-        })
         return {
             path: file.path,
             status: 'unchanged',

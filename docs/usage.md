@@ -88,7 +88,7 @@ Up to 30 notes with a Ghost id and a sync timestamp for the active preset, sorte
 
 ## What gets sent to Ghost for each note
 
-1. **Hash check.** SHA-256 of the body — match against the recorded hash → `unchanged`, just bump the synced-at timestamp.
+1. **Hash check.** SHA-256 of the body — match against the recorded hash → `unchanged`; the note is left untouched (no frontmatter write).
 2. **Canonical probe** (when the preset enables `canonical_url`) — GET against the resolved canonical URL with exponential backoff. Skippable globally.
 3. **Body transforms:**
     - Strip Dataview / Dataview Serializer blocks.

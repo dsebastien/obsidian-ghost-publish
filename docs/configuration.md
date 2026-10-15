@@ -58,7 +58,7 @@ Customise the property names the plugin reads / writes. Defaults shown.
 | Flag         | `ghost_publish`              | `true` once in a queue.                                                  |
 | Ignore flag  | `ghost_publish_ignore`       | `true` to permanently hide from triage.                                  |
 | Email flag   | `ghost_publish_email`        | `true` to opt into the preset's newsletter on first publish.             |
-| Synced at    | `ghost_publish_synced_at`    | Timestamp of last sync.                                                  |
+| Synced at    | `ghost_publish_synced_at`    | Timestamp of the last sync that pushed changes.                          |
 | Ghost id     | `ghost_publish_id`           | Ghost post id; enables idempotent updates.                               |
 | Content hash | `ghost_publish_content_hash` | SHA-256 of the body; unchanged notes skip the round-trip.                |
 | Emailed at   | `ghost_publish_emailed_at`   | Set once on newsletter dispatch; never cleared.                          |

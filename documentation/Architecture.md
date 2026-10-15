@@ -89,7 +89,7 @@ src/
 2. For each note `sync-note.syncNote(app, client, settings, preset, file)`:
     - reads frontmatter via `metadataCache.getFileCache` using `settings.frontmatter` keys;
     - skips if flag is unset, ignored, or assigned to a different preset id;
-    - hashes the body; short-circuits to `unchanged` if id+hash match;
+    - hashes the body; short-circuits to `unchanged` if id+hash match (no frontmatter write);
     - if the preset enables canonical URL: HEAD-probes (unless globally skipped);
     - builds the link map via `metadataCache.getFirstLinkpathDest` + frontmatter checks;
     - strips → YouTube → LINK blocks → images → wikilinks → marked (+footnotes) → HTML;
