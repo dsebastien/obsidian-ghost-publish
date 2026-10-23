@@ -1,5 +1,11 @@
 # Release Notes
 
+## 1.3.0 (2026-10-23)
+
+### Features
+
+- **sync:** show why notes failed in the sync Notice
+
 ## 1.2.1 (2026-10-15)
 
 ### Bug Fixes

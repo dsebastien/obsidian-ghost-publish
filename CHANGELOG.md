@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0](https://github.com/dsebastien/obsidian-ghost-publish/compare/1.2.1...1.3.0) (2026-10-23)
+
+### Features
+
+* **sync:** show why notes failed in the sync Notice ([54cf970](https://github.com/dsebastien/obsidian-ghost-publish/commit/54cf97021197815b86dd0ac7904babe9b326fb83))
+
 ## [1.2.1](https://github.com/dsebastien/obsidian-ghost-publish/compare/1.2.0...1.2.1) (2026-10-15)
 
 ### Bug Fixes
@@ -179,6 +185,7 @@ uses the declarative settings API introduced in Obsidian 1.13.
 ### Features
 
 * **plugin:** implement Ghost Publish with configurable presets ([abf2e2c](https://github.com/dsebastien/obsidian-ghost-publish/commit/abf2e2cb907220e8793b0198c1d13c41acccadd4))
+
 
 
 
