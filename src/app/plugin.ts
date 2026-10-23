@@ -7,6 +7,7 @@ import type { Preset } from './types/preset.intf'
 import type { GhostNewsletterSummary, GhostTagSummary } from './types/ghost-api.intf'
 import { GhostPublishSettingTab } from './settings/settings-tab'
 import {
+    FAILURE_NOTICE_TIMEOUT_MS,
     NOTICE_TIMEOUT_MS,
     POST_SYNC_REFRESH_DELAY_MS,
     PUBLISH_ICON_FAIL,
@@ -24,6 +25,7 @@ import {
 import { bootstrapAdminKey, readSecret } from './services/admin-key-secret'
 import { log } from '../utils/log'
 import { registerWhatsNewView } from './whats-new'
+import { summarizeFailureReasons } from './utils/failure-reasons.fn'
 
 export class GhostPublishPlugin extends Plugin {
     // No `override`: `Plugin.settings` only exists in API 1.13+ typings and the
@@ -114,7 +116,15 @@ export class GhostPublishPlugin extends Plugin {
                     ? `${PUBLISH_ICON_FAIL} ${preset.name}: errors`
                     : `${PUBLISH_ICON_OK} ${preset.name}: done`
             const body = parts.length > 0 ? parts.join(', ') : 'nothing to do'
-            new Notice(`${headline} — ${body}`, NOTICE_TIMEOUT_MS)
+            const reasons = summarizeFailureReasons(results)
+            if (reasons.length > 0) {
+                new Notice(
+                    `${headline} — ${body}\n\n${reasons.join('\n')}`,
+                    FAILURE_NOTICE_TIMEOUT_MS
+                )
+            } else {
+                new Notice(`${headline} — ${body}`, NOTICE_TIMEOUT_MS)
+            }
             // Two-stage refresh:
             //   1) Immediate, so the panel feels responsive (Notice + reset).
             //   2) Delayed, so metadataCache 'changed' events from each

@@ -237,9 +237,14 @@ export class GhostApiClient {
 
         let detail = `Request failed with status ${res.status}`
         try {
-            const json = res.json as { errors?: { message?: string }[] } | undefined
-            if (json?.errors?.[0]?.message) {
-                detail = json.errors[0].message
+            const json = res.json as
+                | { errors?: { message?: string; context?: string | null }[] }
+                | undefined
+            const error = json?.errors?.[0]
+            if (error?.message) {
+                // `context` carries the actionable part (e.g. "Your plan supports
+                // up to 3,000 members. Please upgrade to reenable publishing.")
+                detail = error.context ? `${error.message} ${error.context}` : error.message
             } else if (res.text) {
                 detail = res.text.slice(0, 500)
             }

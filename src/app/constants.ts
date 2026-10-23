@@ -6,6 +6,9 @@ export const VIEW_ICON = 'send'
 /** How long Notice popups stay visible by default. */
 export const NOTICE_TIMEOUT_MS = 6000
 
+/** Sync failure Notices stay until dismissed (0 = no timeout) so the reasons can be read. */
+export const FAILURE_NOTICE_TIMEOUT_MS = 0
+
 /** Delays (ms) between canonical-URL HEAD probe attempts. */
 export const CANONICAL_PROBE_DELAYS_MS = [0, 5000, 15000, 45000]
 
