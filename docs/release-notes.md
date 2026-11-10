@@ -1,5 +1,11 @@
 # Release Notes
 
+## 1.3.1 (2026-11-10)
+
+### Performance Improvements
+
+- make triage and queue actions instant
+
 ## 1.3.0 (2026-10-23)
 
 ### Features
