@@ -1,37 +1,33 @@
-/**
- * Fade a card out, then collapse its slot, then remove it from the DOM.
- *
- * The animation runs in two passes:
- *   1. Lock the current height inline so the upcoming transition has a
- *      definite starting value.
- *   2. On the next animation frame, add `.gp-card-removing` which fades
- *      opacity to 0, collapses max-height / margin / padding / border.
- *
- * Once the transition ends the element is removed from the DOM and the
- * `onRemoved` callback runs (where the caller updates summary counts etc.).
- */
-export function animateCardRemoval(card: HTMLElement, onRemoved: () => void): void {
-    const computed = window.getComputedStyle(card)
-    const startHeight = computed.height
-    card.style.maxHeight = startHeight
-    // Force a reflow so the upcoming transition has a definite start point.
-    void card.offsetHeight
-    window.requestAnimationFrame(() => {
-        card.addClass('gp-card-removing')
-    })
+/** Safety net (ms) for when `transitionend` never fires. Keep above the CSS collapse duration. */
+const REMOVAL_FALLBACK_MS = 250
 
+/**
+ * Hide a card at once, collapse its slot, then remove it from the DOM.
+ *
+ * Called synchronously from the click handler, before any write: the card
+ * must react on the same frame as the click (optimistic UI).
+ *   1. Lock the current height inline so the collapse has a definite start.
+ *   2. Force a reflow, then add `.gp-card-removing` in the same frame: the
+ *      card stops taking clicks and fades immediately while its slot collapses.
+ *
+ * Once the transition ends the element is removed and `onRemoved` runs.
+ */
+export function animateCardRemoval(card: HTMLElement, onRemoved?: () => void): void {
+    if (card.hasClass('gp-card-removing')) return
+    // Reading offsetHeight forces the one reflow the transition needs.
+    card.style.maxHeight = `${card.offsetHeight}px`
+    void card.offsetHeight
+    card.addClass('gp-card-removing')
+
+    let done = false
     const finalize = (): void => {
-        card.removeEventListener('transitionend', finalize)
+        if (done) return
+        done = true
         card.remove()
-        onRemoved()
+        onRemoved?.()
     }
-    card.addEventListener('transitionend', finalize, { once: true })
-    // Defensive fallback: if `transitionend` doesn't fire (reduced-motion,
-    // browser quirk, very fast unmount), still remove the card after a
-    // safety timeout.
-    window.setTimeout(() => {
-        if (card.isConnected) {
-            finalize()
-        }
-    }, 400)
+    card.addEventListener('transitionend', (ev) => {
+        if (ev.target === card && ev.propertyName === 'max-height') finalize()
+    })
+    window.setTimeout(finalize, REMOVAL_FALLBACK_MS)
 }

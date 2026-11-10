@@ -5,13 +5,13 @@ import type { Preset } from '../../types/preset.intf'
 import { TRIAGE_RANGES } from '../../types/news-candidate.intf'
 import type { PublicationCandidate, TriageRangeId } from '../../types/news-candidate.intf'
 import { findCandidates } from '../../services/candidate-discovery'
-import { applyTriageAction } from '../../services/triage-actions'
+import { applyTriageAction, isTriageActionApplied } from '../../services/triage-actions'
 import type { TriageAction } from '../../services/triage-actions'
 import { NOTICE_TIMEOUT_MS } from '../../constants'
 import { animateCardRemoval } from './card-animations'
+import { renderIncrementally } from './incremental-list'
 import { openNoteLink } from './open-note-link'
 import { filterNotesBySearch } from './note-search'
-import { log } from '../../../utils/log'
 
 export function renderTriagePage(
     container: HTMLElement,
@@ -33,7 +33,9 @@ export function renderTriagePage(
         onRangeChange(select.value as TriageRangeId)
     })
 
-    const allCandidates = findCandidates(app, plugin.settings, range)
+    const allCandidates = findCandidates(app, plugin.settings, range).filter(
+        (c) => !plugin.pendingMutations.has(c.file.path)
+    )
     const isSearching = searchQuery.trim().length > 0
     const candidates = filterNotesBySearch(
         allCandidates,
@@ -71,30 +73,40 @@ export function renderTriagePage(
         action: TriageAction,
         successMessage: string | null
     ): void => {
-        void (async () => {
-            try {
-                await applyTriageAction(
-                    app,
-                    candidate.file,
-                    plugin.settings.frontmatter,
-                    preset.id,
-                    action
-                )
-                if (successMessage !== null) {
-                    new Notice(successMessage, NOTICE_TIMEOUT_MS)
+        // Optimistic: hide the card and update the count now, write after.
+        // A failed write re-renders the panel, which brings the card back.
+        if (card.hasClass('gp-card-removing')) return
+        visibleCount = Math.max(0, visibleCount - 1)
+        renderSummary()
+        animateCardRemoval(card)
+        if (successMessage !== null) {
+            new Notice(successMessage, NOTICE_TIMEOUT_MS)
+        }
+        void plugin
+            .applyOptimistically(
+                candidate.file,
+                () =>
+                    applyTriageAction(
+                        app,
+                        candidate.file,
+                        plugin.settings.frontmatter,
+                        preset.id,
+                        action
+                    ),
+                (front) =>
+                    isTriageActionApplied(front, plugin.settings.frontmatter, preset.id, action)
+            )
+            .then((ok) => {
+                if (!ok) {
+                    new Notice(
+                        `Failed to apply triage action: ${candidate.file.basename}`,
+                        NOTICE_TIMEOUT_MS
+                    )
                 }
-                animateCardRemoval(card, () => {
-                    visibleCount = Math.max(0, visibleCount - 1)
-                    renderSummary()
-                })
-            } catch (e) {
-                log(`Triage ${action} failed`, 'error', e)
-                new Notice('Failed to apply triage action.', NOTICE_TIMEOUT_MS)
-            }
-        })()
+            })
     }
 
-    for (const candidate of candidates) {
+    renderIncrementally(list, candidates, (candidate) => {
         const card = list.createDiv({ cls: 'gp-card' })
 
         const header = card.createDiv({ cls: 'gp-card-header' })
@@ -147,5 +159,5 @@ export function renderTriagePage(
         ignoreBtn.addEventListener('click', () => {
             handleAction(card, candidate, 'ignore', null)
         })
-    }
+    })
 }

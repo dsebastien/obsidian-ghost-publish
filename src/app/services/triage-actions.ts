@@ -49,3 +49,26 @@ export async function removeFromQueue(
         frontmatter[COSMETIC_FM.updated] = new Date().toISOString()
     })
 }
+
+/**
+ * True when cached frontmatter already reflects a triage action. Used to
+ * keep an optimistically hidden card hidden until the metadataCache catches up.
+ */
+export function isTriageActionApplied(
+    front: Record<string, unknown>,
+    fm: FrontmatterPropertyNames,
+    presetId: string,
+    action: TriageAction
+): boolean {
+    if (action === 'ignore') return front[fm.ignoreFlag] === true && front[fm.flag] !== true
+    const queued = front[fm.flag] === true && front[fm.preset] === presetId
+    return action === 'publish_email' ? queued && front[fm.emailFlag] === true : queued
+}
+
+/** True when cached frontmatter shows the note is no longer queued. */
+export function isRemovedFromQueue(
+    front: Record<string, unknown>,
+    fm: FrontmatterPropertyNames
+): boolean {
+    return front[fm.flag] !== true
+}

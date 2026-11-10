@@ -235,11 +235,11 @@
     border-radius: var(--radius-s);
     overflow: hidden;
     transition:
-        opacity 180ms ease,
-        max-height 220ms ease,
-        padding 220ms ease,
-        margin 220ms ease,
-        border-width 220ms ease;
+        opacity 60ms ease-out,
+        max-height 150ms ease-out,
+        padding 150ms ease-out,
+        margin 150ms ease-out,
+        border-width 150ms ease-out;
 }
 
 /* Doubled-class selector to bump specificity above .gp-card without using !important. */
@@ -499,4 +499,9 @@
 
 .ghost-publish-whats-new-body .ghost-publish-whats-new-links .setting-item-description {
     @apply pr-3;
+}
+
+.gp-list-sentinel {
+    height: 1px;
+    flex-shrink: 0;
 }

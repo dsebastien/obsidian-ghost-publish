@@ -1,4 +1,5 @@
 import { Notice, Plugin } from 'obsidian'
+import type { TFile } from 'obsidian'
 import { produce } from 'immer'
 import type { Draft } from 'immer'
 import { DEFAULT_FRONTMATTER, createDefaultSettings } from './types/plugin-settings.intf'
@@ -26,11 +27,14 @@ import { bootstrapAdminKey, readSecret } from './services/admin-key-secret'
 import { log } from '../utils/log'
 import { registerWhatsNewView } from './whats-new'
 import { summarizeFailureReasons } from './utils/failure-reasons.fn'
+import { PendingMutations } from './services/pending-mutations'
 
 export class GhostPublishPlugin extends Plugin {
     // No `override`: `Plugin.settings` only exists in API 1.13+ typings and the
     // plugin supports older public releases.
     override settings: PluginSettings = produce(createDefaultSettings(), () => {})
+    /** Notes hidden by an optimistic panel action whose write has not landed in the cache yet. */
+    readonly pendingMutations = new PendingMutations()
 
     override async onload(): Promise<void> {
         // Must run before anything can call saveData (fresh-install detection)
@@ -38,6 +42,17 @@ export class GhostPublishPlugin extends Plugin {
         log('Initializing', 'debug')
         await this.loadSettings()
         this.warnIfAdminKeyMissing()
+
+        this.registerEvent(
+            this.app.metadataCache.on('changed', (file) => {
+                this.pendingMutations.onMetadataChanged(file.path)
+            })
+        )
+        this.registerEvent(
+            this.app.vault.on('rename', (file, oldPath) => {
+                this.pendingMutations.onRenamed(oldPath, file.path)
+            })
+        )
 
         this.registerView(VIEW_TYPE_GHOST_PUBLISH, (leaf) => new GhostPublishView(leaf, this))
 
@@ -64,7 +79,42 @@ export class GhostPublishPlugin extends Plugin {
         })
     }
 
-    override onunload(): void {}
+    override onunload(): void {
+        this.pendingMutations.dispose()
+    }
+
+    /**
+     * Run a frontmatter write for a card the panel has already removed.
+     * The note stays hidden from every list until the metadataCache shows
+     * the new state (`isApplied`), even while indexing delays it. On failure
+     * the note is released and the panel re-renders so the card comes back.
+     * `file.path` is read after the write because the note may be renamed
+     * while the write is in flight.
+     */
+    async applyOptimistically(
+        file: TFile,
+        write: () => Promise<void>,
+        isApplied: (frontmatter: Record<string, unknown>) => boolean
+    ): Promise<boolean> {
+        this.pendingMutations.begin(file.path, (currentPath) =>
+            isApplied(
+                (this.app.metadataCache.getCache(currentPath)?.frontmatter ?? {}) as Record<
+                    string,
+                    unknown
+                >
+            )
+        )
+        try {
+            await write()
+            this.pendingMutations.settle(file.path)
+            return true
+        } catch (e) {
+            this.pendingMutations.cancel(file.path)
+            this.refreshView()
+            log(`Write failed for ${file.path}`, 'error', e)
+            return false
+        }
+    }
 
     async activateView(): Promise<void> {
         const { workspace } = this.app

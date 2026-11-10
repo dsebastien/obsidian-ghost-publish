@@ -3,9 +3,10 @@ import type { App } from 'obsidian'
 import type { GhostPublishPlugin } from '../../plugin'
 import type { Preset } from '../../types/preset.intf'
 import { findQueuedNotesForPreset } from '../../services/candidate-discovery'
-import { removeFromQueue } from '../../services/triage-actions'
+import { isRemovedFromQueue, removeFromQueue } from '../../services/triage-actions'
 import { NOTICE_TIMEOUT_MS } from '../../constants'
 import { animateCardRemoval } from './card-animations'
+import { renderIncrementally } from './incremental-list'
 import { openNoteLink } from './open-note-link'
 import { filterNotesBySearch } from './note-search'
 import { log } from '../../../utils/log'
@@ -24,7 +25,10 @@ export function renderQueuePage(
     // visible subset drives what gets rendered as cards. Sync is always run
     // against the full queue, independent of both the hide-synced filter and
     // the search query.
-    const fullQueue = findQueuedNotesForPreset(app, plugin.settings, preset.id)
+    // Notes with an in-flight "Remove from queue" write stay hidden.
+    const fullQueue = findQueuedNotesForPreset(app, plugin.settings, preset.id).filter(
+        (q) => !plugin.pendingMutations.has(q.file.path)
+    )
     const syncedCount = fullQueue.filter((q) => q.hasGhostId).length
     const afterHideFilter = hideSynced ? fullQueue.filter((q) => !q.hasGhostId) : fullQueue
     const isSearching = searchQuery.trim().length > 0
@@ -110,7 +114,7 @@ export function renderQueuePage(
 
     const list = container.createDiv({ cls: 'gp-card-list' })
 
-    for (const item of visibleQueue) {
+    renderIncrementally(list, visibleQueue, (item) => {
         const card = list.createDiv({ cls: 'gp-card' })
         const header = card.createDiv({ cls: 'gp-card-header' })
         const titleEl = header.createEl('a', {
@@ -144,23 +148,27 @@ export function renderQueuePage(
             cls: 'mod-muted'
         })
         removeBtn.addEventListener('click', () => {
-            void (async () => {
-                try {
-                    await removeFromQueue(app, item.file, plugin.settings.frontmatter)
-                    new Notice(`Removed from queue: ${item.file.basename}`, NOTICE_TIMEOUT_MS)
-                    animateCardRemoval(card, () => {
-                        visibleCount = Math.max(0, visibleCount - 1)
-                        renderSummary()
-                        // Note: we deliberately do NOT disable the Sync button
-                        // here. Sync acts on the full queue, which may still
-                        // have synced items even after every visible card is
-                        // removed.
-                    })
-                } catch (e) {
-                    log('Remove from queue failed', 'error', e)
-                    new Notice('Failed to remove note from queue.', NOTICE_TIMEOUT_MS)
-                }
-            })()
+            // Optimistic: hide the card now, write after. We deliberately
+            // do NOT disable the Sync button: Sync acts on the full queue.
+            if (card.hasClass('gp-card-removing')) return
+            visibleCount = Math.max(0, visibleCount - 1)
+            renderSummary()
+            animateCardRemoval(card)
+            new Notice(`Removed from queue: ${item.file.basename}`, NOTICE_TIMEOUT_MS)
+            void plugin
+                .applyOptimistically(
+                    item.file,
+                    () => removeFromQueue(app, item.file, plugin.settings.frontmatter),
+                    (front) => isRemovedFromQueue(front, plugin.settings.frontmatter)
+                )
+                .then((ok) => {
+                    if (!ok) {
+                        new Notice(
+                            `Failed to remove note from queue: ${item.file.basename}`,
+                            NOTICE_TIMEOUT_MS
+                        )
+                    }
+                })
         })
-    }
+    })
 }
