@@ -14,7 +14,7 @@ When **Point the canonical URL to the note** is off, a post whose `canonical_url
 
 ### Sync again every note of a preset
 
-The new command **Sync again every note of a preset** sends every note of the preset that is already on Ghost again, also the notes that did not change. Use it once after you change the link or canonical URL settings, to apply them to your live posts. It asks for confirmation first and says how many posts it will update. It never sends a newsletter email, and it leaves notes that are not on Ghost yet to the normal sync.
+The new command **Sync again every note of a preset** sends every note of the preset that is already on Ghost again, also the notes that did not change. Use it once after you change the link or canonical URL settings, to apply them to your live posts. It asks for confirmation first and says how many posts it will update. Each post keeps its status on Ghost: a draft stays a draft, a post you published by hand stays published. It never sends a newsletter email, and it leaves notes that are not on Ghost yet to the normal sync.
 
 ### Keep the address of each post in its note
 

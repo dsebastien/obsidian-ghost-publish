@@ -12,7 +12,7 @@ Three ways:
 - Click the **paper-plane** ribbon icon.
 - Run **Ghost Publish: Open panel** from the command palette.
 - Run **Ghost Publish: Sync queued notes for all enabled presets** to bulk-sync without opening the panel.
-- Run **Ghost Publish: Sync again every note of a preset** after you change the link or canonical URL settings of a preset, to apply them to its live posts. Notes that did not change are skipped by a normal sync; this command sends them too, and never sends a newsletter email.
+- Run **Ghost Publish: Sync again every note of a preset** after you change the link or canonical URL settings of a preset, to apply them to its live posts. Notes that did not change are skipped by a normal sync; this command sends them too. It keeps the status of each post on Ghost (a draft stays a draft), changes `date_updated` only for notes whose content changed, and never sends a newsletter email. If a post was deleted on Ghost and its note still waits for its newsletter, the command skips it: run a normal sync to recreate the post and send the email.
 
 The panel lives in the right sidebar by default. The top row of tabs lists every enabled preset. Below it, sub-tabs (Triage / Queue / Recently published) apply to the active preset.
 
@@ -112,8 +112,8 @@ When a preset has **Listing note** enabled, the plugin regenerates the configure
 
 ## Commands
 
-| Command                                                  | Description                                                                                                                                                               |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ghost Publish: Open panel                                | Open or focus the panel.                                                                                                                                                  |
-| Ghost Publish: Sync queued notes for all enabled presets | Run sync for every enabled preset.                                                                                                                                        |
-| Ghost Publish: Sync again every note of a preset         | Pick a preset; after a confirmation that names the number of live posts, send all its notes that are on Ghost again, also unchanged ones. Never sends a newsletter email. |
+| Command                                                  | Description                                                                                                                                                                                                             |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ghost Publish: Open panel                                | Open or focus the panel.                                                                                                                                                                                                |
+| Ghost Publish: Sync queued notes for all enabled presets | Run sync for every enabled preset.                                                                                                                                                                                      |
+| Ghost Publish: Sync again every note of a preset         | Pick an enabled preset; after a confirmation that names the number of live posts, send all its notes that are on Ghost again, also unchanged ones. Each post keeps its status on Ghost. Never sends a newsletter email. |
