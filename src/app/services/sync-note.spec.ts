@@ -205,6 +205,7 @@ describe('syncNote: link back to the note and canonical_url', () => {
         const result = await syncNote(h.app, h.client, settings, preset, h.file)
 
         expect(result.status).toBe('updated')
+        expect(payloadOf(h.updatePost, 1)['status']).toBe('published')
         expect(payloadOf(h.updatePost, 1)).toHaveProperty('canonical_url', null)
         expect(htmlOf(h.updatePost, 1)).toContain(`<a href="${NOTE_URL}">`)
     })
@@ -558,7 +559,11 @@ describe('syncNote: sync again (ignore the content hash, no email)', () => {
         expect(h.updatePost).toHaveBeenCalledTimes(1)
     })
 
-    it('never sends the newsletter, even when the post is recreated', async () => {
+    function again(): { ignoreContentHash: true; allowEmail: false } {
+        return { ignoreContentHash: true, allowEmail: false }
+    }
+
+    it('skips a missing post whose note still waits for its email', async () => {
         const { settings, preset, fmKeys, queued } = setup()
         preset.newsletterSlug = 'weekly'
         const h = harness({
@@ -571,15 +576,114 @@ describe('syncNote: sync again (ignore the content hash, no email)', () => {
             getPost: () => Promise.reject(new Error('Request failed with status 404'))
         })
 
-        const result = await syncNote(h.app, h.client, settings, preset, h.file, {
-            ignoreContentHash: true,
-            allowEmail: false
+        const result = await syncNote(h.app, h.client, settings, preset, h.file, again())
+
+        expect(result.status).toBe('skipped')
+        expect(result.reason).toBe('post missing on Ghost; run a normal sync to recreate and email')
+        expect(h.createPost).not.toHaveBeenCalled()
+        expect(h.publishDraft).not.toHaveBeenCalled()
+        expect(h.processFrontMatter).not.toHaveBeenCalled()
+    })
+
+    it('recreates a missing post without email when the email was already sent', async () => {
+        const { settings, preset, fmKeys, queued } = setup()
+        preset.newsletterSlug = 'weekly'
+        const h = harness({
+            frontmatter: {
+                ...queued,
+                [fmKeys.emailFlag]: true,
+                [fmKeys.emailedAt]: '2026-01-01T00:00:00.000Z',
+                [fmKeys.ghostId]: 'gone',
+                [fmKeys.contentHash]: await sha256Hex(BODY)
+            },
+            getPost: () => Promise.reject(new Error('Request failed with status 404'))
         })
+
+        const result = await syncNote(h.app, h.client, settings, preset, h.file, again())
 
         expect(result.status).toBe('recreated')
         expect(payloadOf(h.createPost, 0)['status']).toBe('published')
         expect(h.publishDraft).not.toHaveBeenCalled()
         expect(result.emailed).toBe(false)
-        expect(h.frontmatter).not.toHaveProperty(fmKeys.emailedAt)
+    })
+
+    it("keeps the post's status on Ghost: no status in the update", async () => {
+        const { settings, preset, fmKeys, queued } = setup()
+        const h = harness({
+            frontmatter: {
+                ...queued,
+                [fmKeys.ghostId]: 'post-1',
+                [fmKeys.contentHash]: await sha256Hex(BODY),
+                published: true
+            },
+            updated: post({ status: 'draft', url: PREVIEW_URL })
+        })
+
+        await syncNote(h.app, h.client, settings, preset, h.file, again())
+
+        expect(payloadOf(h.updatePost, 1)).not.toHaveProperty('status')
+        expect(h.frontmatter['published']).toBe(false)
+    })
+
+    it('does not touch date_updated when the content did not change', async () => {
+        const { settings, preset, fmKeys, queued } = setup()
+        const h = harness({
+            frontmatter: {
+                ...queued,
+                [fmKeys.ghostId]: 'post-1',
+                [fmKeys.contentHash]: await sha256Hex(BODY),
+                [fmKeys.syncedAt]: '2020-01-01T00:00:00.000Z',
+                date_updated: '2020-01-01'
+            }
+        })
+
+        await syncNote(h.app, h.client, settings, preset, h.file, again())
+
+        expect(h.frontmatter['date_updated']).toBe('2020-01-01')
+        expect(h.frontmatter[fmKeys.syncedAt]).not.toBe('2020-01-01T00:00:00.000Z')
+    })
+
+    it('writes date_updated when the content changed', async () => {
+        const { settings, preset, fmKeys, queued } = setup()
+        const h = harness({
+            frontmatter: {
+                ...queued,
+                [fmKeys.ghostId]: 'post-1',
+                [fmKeys.contentHash]: 'old',
+                date_updated: '2020-01-01'
+            }
+        })
+
+        await syncNote(h.app, h.client, settings, preset, h.file, again())
+
+        expect(h.frontmatter['date_updated']).not.toBe('2020-01-01')
+    })
+})
+
+describe('syncNote: published property', () => {
+    it('follows the status that Ghost returns, not the preset', async () => {
+        const { settings, preset, queued } = setup()
+        const h = harness({
+            frontmatter: queued,
+            created: post({ status: 'scheduled', url: PREVIEW_URL })
+        })
+
+        await syncNote(h.app, h.client, settings, preset, h.file)
+
+        expect(h.frontmatter['published']).toBe(false)
+    })
+
+    it('is true for a post published with its newsletter', async () => {
+        const { settings, preset, fmKeys, queued } = setup()
+        preset.newsletterSlug = 'weekly'
+        const h = harness({
+            frontmatter: { ...queued, [fmKeys.emailFlag]: true },
+            created: post({ status: 'draft', url: PREVIEW_URL }),
+            publishDraft: () => Promise.resolve(undefined)
+        })
+
+        await syncNote(h.app, h.client, settings, preset, h.file)
+
+        expect(h.frontmatter['published']).toBe(true)
     })
 })

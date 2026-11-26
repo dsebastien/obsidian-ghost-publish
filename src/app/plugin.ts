@@ -181,9 +181,9 @@ export class GhostPublishPlugin extends Plugin {
      * content hash. Never sends a newsletter email.
      */
     pickPresetToResync(): void {
-        const presets = this.settings.presets
+        const presets = this.settings.presets.filter((p) => p.enabled)
         if (presets.length === 0) {
-            new Notice('No presets — nothing to sync.', NOTICE_TIMEOUT_MS)
+            new Notice('No enabled presets — nothing to sync.', NOTICE_TIMEOUT_MS)
             return
         }
         new PresetSuggestModal(this.app, presets, (preset) => {

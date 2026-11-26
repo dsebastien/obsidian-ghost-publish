@@ -163,11 +163,14 @@ export async function syncNote(
             const updatePayload: Record<string, unknown> = {
                 title,
                 html,
-                status: preset.ghostStatus,
                 tags: tagsPayload,
                 custom_excerpt: customExcerpt,
                 updated_at: existing.updated_at
             }
+            // "Sync again" keeps the post's status on Ghost: a draft that waits
+            // for its newsletter stays a draft, a post published by hand stays
+            // published.
+            if (!options.ignoreContentHash) updatePayload['status'] = preset.ghostStatus
             if (setCanonical) {
                 updatePayload['canonical_url'] = noteUrl
             } else if (noteUrl && existing.canonical_url === noteUrl) {
@@ -192,12 +195,22 @@ export async function syncNote(
         }
     }
 
+    const waitsForEmail =
+        preset.newsletterSlug.trim().length > 0 &&
+        fm[fmKeys.emailFlag] === true &&
+        !fm[fmKeys.emailedAt]
+    if (!postId && action === 'recreated' && !allowEmail && waitsForEmail) {
+        // Recreating here would publish without the email, and the email is
+        // only ever sent on the first publish: leave it to a normal sync.
+        return {
+            path: file.path,
+            status: 'skipped',
+            reason: 'post missing on Ghost; run a normal sync to recreate and email'
+        }
+    }
+
     if (!postId) {
-        shouldEmail =
-            allowEmail &&
-            preset.newsletterSlug.trim().length > 0 &&
-            fm[fmKeys.emailFlag] === true &&
-            !fm[fmKeys.emailedAt]
+        shouldEmail = allowEmail && waitsForEmail
         const createPayload: Record<string, unknown> = {
             title,
             html,
@@ -252,6 +265,13 @@ export async function syncNote(
 
     const nowIso = new Date().toISOString()
     const today = nowIso.slice(0, 10)
+    // From the status Ghost returned; a publish answer without a post
+    // (lastPost undefined after an email) means the post is published.
+    const isPublished =
+        lastPost?.status !== undefined
+            ? lastPost.status === 'published'
+            : emailed || preset.ghostStatus === 'published'
+    const contentChanged = contentHash !== existingHash
     const capturedPostId = postId
     const capturedPresetId = preset.id
     await app.fileManager.processFrontMatter(file, (frontmatter: Record<string, unknown>) => {
@@ -264,11 +284,12 @@ export async function syncNote(
         if (live?.url && frontmatter[postUrlKey] !== live.url) {
             frontmatter[postUrlKey] = live.url
         }
-        frontmatter[COSMETIC_FM.published] = preset.ghostStatus === 'published'
+        frontmatter[COSMETIC_FM.published] = isPublished
         if (!frontmatter[COSMETIC_FM.datePublished]) {
             frontmatter[COSMETIC_FM.datePublished] = today
         }
-        frontmatter[COSMETIC_FM.dateUpdated] = today
+        // Only when the content changed ("sync again" may push unchanged notes).
+        if (contentChanged) frontmatter[COSMETIC_FM.dateUpdated] = today
     })
 
     return {
