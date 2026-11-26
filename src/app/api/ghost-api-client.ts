@@ -131,13 +131,15 @@ export class GhostApiClient {
     /**
      * Publish a draft, optionally triggering a newsletter email. Ghost only
      * fires the newsletter on the draft→published transition. Returns the
-     * published post (its `url` is the public one).
+     * published post (its `url` is the public one), or undefined when the
+     * successful answer carries no post: the publish (and the email) did
+     * happen, so this never throws after a 2xx.
      */
     async publishDraft(
         postId: string,
         updatedAt: string,
         newsletterSlug?: string
-    ): Promise<GhostPost> {
+    ): Promise<GhostPost | undefined> {
         const qs = newsletterSlug ? `?newsletter=${encodeURIComponent(newsletterSlug)}` : ''
         const res = await this.request({
             method: 'PUT',
@@ -145,7 +147,11 @@ export class GhostApiClient {
             body: JSON.stringify({ posts: [{ status: 'published', updated_at: updatedAt }] }),
             contentType: 'application/json'
         })
-        return (res.json as GhostPostsResponse).posts[0]!
+        try {
+            return (res.json as Partial<GhostPostsResponse> | undefined)?.posts?.[0]
+        } catch {
+            return undefined
+        }
     }
 
     async uploadImage(filename: string, data: ArrayBuffer, contentType: string): Promise<string> {
