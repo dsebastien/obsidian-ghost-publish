@@ -12,6 +12,7 @@ Three ways:
 - Click the **paper-plane** ribbon icon.
 - Run **Ghost Publish: Open panel** from the command palette.
 - Run **Ghost Publish: Sync queued notes for all enabled presets** to bulk-sync without opening the panel.
+- Run **Ghost Publish: Sync again every note of a preset** after you change the link or canonical URL settings of a preset, to apply them to its live posts. Notes that did not change are skipped by a normal sync; this command sends them too, and never sends a newsletter email.
 
 The panel lives in the right sidebar by default. The top row of tabs lists every enabled preset. Below it, sub-tabs (Triage / Queue / Recently published) apply to the active preset.
 
@@ -31,6 +32,7 @@ A preset is a reusable publication profile:
 - **Tags** — an ordered list. The first tag is Ghost's primary tag and drives theme routing for sites with custom routes.
 - **Newsletter** — pick from the dropdown (populated from the cached Ghost newsletters). Leave empty to disable email opt-in.
 - **Link back to the note** — when on, the post starts with a short line that links to the note on your public notes site. Requires the global **Notes base URL** setting.
+- **Text of the link back** — shown when the link back is on: the words before the note title. Default `Canonical version:`.
 - **Point the canonical URL to the note** — when on, the post's `canonical_url` points to the note on your public notes site, so search engines treat the note as the original. Turn it off (and keep the link back on) to make the post the original. Requires the global **Notes base URL** setting.
 - **Listing note** — when on, the plugin maintains a markdown file in your vault listing every note currently published under this preset.
 
@@ -99,7 +101,7 @@ Up to 30 notes with a Ghost id and a sync timestamp for the active preset, sorte
     - Upload every `![[image]]` to Ghost; rewrite to `![alt](ghost-url)`.
     - Resolve `[[wikilinks]]`: LINK-block URL > known URL map > public-mirror URL (when eligibility key is set) > bold-text fallback.
 4. **HTML build.** Markdown → HTML via `marked`, including footnotes (`text[^1]`, `[^1]: …`, and inline `^[…]`) rendered to superscript anchors plus a trailing footnotes section; the line that links back to the note prepended when the preset asks for it.
-5. **Post create or update.** Status, tags, optional `canonical_url`, `custom_excerpt`. When the preset does not set `canonical_url` and the post still points to the note from an earlier sync, the update clears it. Existing posts use `updated_at` for optimistic concurrency. 404 triggers a clean recreate.
+5. **Post create or update.** Status, tags, optional `canonical_url`, `custom_excerpt`. When the preset does not set `canonical_url`, a `canonical_url` equal to the note URL is cleared. Existing posts use `updated_at` for optimistic concurrency. 404 triggers a clean recreate.
 6. **Embed upgrades.** YouTube paragraphs → oembed cards; LINK-block paragraphs → bookmark cards.
 7. **Optional newsletter dispatch.** If the preset has a newsletter AND the note opted into email AND it has never been emailed, the draft transitions to published with the newsletter slug (the only Ghost transition that fires the email).
 8. **Frontmatter writeback.** ghost_id, synced_at, content_hash, preset id, optionally emailed_at, plus the cosmetic `published`, `date_published`, `date_updated` fields. When the **Post URL** property is set, also the public address of the post (only when it changed, and never for a draft or a scheduled post).
@@ -110,7 +112,8 @@ When a preset has **Listing note** enabled, the plugin regenerates the configure
 
 ## Commands
 
-| Command                                                  | Description                        |
-| -------------------------------------------------------- | ---------------------------------- |
-| Ghost Publish: Open panel                                | Open or focus the panel.           |
-| Ghost Publish: Sync queued notes for all enabled presets | Run sync for every enabled preset. |
+| Command                                                  | Description                                                                                                                                                               |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ghost Publish: Open panel                                | Open or focus the panel.                                                                                                                                                  |
+| Ghost Publish: Sync queued notes for all enabled presets | Run sync for every enabled preset.                                                                                                                                        |
+| Ghost Publish: Sync again every note of a preset         | Pick a preset; after a confirmation that names the number of live posts, send all its notes that are on Ghost again, also unchanged ones. Never sends a newsletter email. |

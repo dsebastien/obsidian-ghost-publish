@@ -65,7 +65,7 @@ Customise the property names the plugin reads / writes. Defaults shown.
 | Excerpt      | `ghost_publish_excerpt`      | Optional. Overrides the auto-derived `custom_excerpt`.                         |
 | Post URL     | `""` (off)                   | Optional. Receives the public address of the post after each create or update. |
 
-**Post URL** is off until you type a property name (for example `ghost_publish_url`). Then, after each sync that creates or updates a post, the plugin writes the address that Ghost gives for the published post into that property. It writes only when the address changed, so a note is not rewritten for nothing. A draft or a scheduled post has no public address yet: the plugin writes nothing for it. A note that did not change is not sent to Ghost, so it gets the property on its next change.
+**Post URL** is off until you type a property name (for example `ghost_publish_url`). Then, after each sync that creates or updates a post, the plugin writes the address that Ghost gives for the published post into that property. It writes only when the address changed, so a note is not rewritten for nothing. A draft or a scheduled post has no public address yet: the plugin writes nothing for it. A note that did not change is not sent to Ghost, so it gets the property on its next change (or with **Sync again every note of a preset**). The name must not be one that the plugin already uses: another property in this list, `title`, `published`, `date_published`, `date_updated`, `created` or `updated`. The settings refuse such a name, and a sync does not write it.
 
 ## Tags & newsletters cache
 
@@ -79,21 +79,24 @@ Refreshing is **manual only** — the plugin never auto-fetches.
 
 Each preset is edited via a modal:
 
-| Field                                   | Description                                                                                                                         |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**                                | Shown as the panel tab label.                                                                                                       |
-| **Enabled**                             | Disabled presets don't show as tabs.                                                                                                |
-| **Status**                              | `published` (default) or `draft`.                                                                                                   |
-| **Tags**                                | Ordered list. First tag is Ghost's primary tag. Autocomplete from the cached tags.                                                  |
-| **Newsletter**                          | Picked from the dropdown of cached newsletters. Empty disables email opt-in.                                                        |
-| **Link back to the note**               | Start the post with a line that links to the note on your notes site.                                                               |
-| **Point the canonical URL to the note** | Set the post's `canonical_url` to the note on your notes site: the note is the original. Turn it off to make the post the original. |
-| **Listing note**                        | Maintain a vault note linking every post currently published under this preset.                                                     |
-| **Listing note path**                   | Vault-relative path. Created with intermediate folders if missing.                                                                  |
+| Field                                   | Description                                                                                                                                                                 |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Name**                                | Shown as the panel tab label.                                                                                                                                               |
+| **Enabled**                             | Disabled presets don't show as tabs.                                                                                                                                        |
+| **Status**                              | `published` (default) or `draft`.                                                                                                                                           |
+| **Tags**                                | Ordered list. First tag is Ghost's primary tag. Autocomplete from the cached tags.                                                                                          |
+| **Newsletter**                          | Picked from the dropdown of cached newsletters. Empty disables email opt-in.                                                                                                |
+| **Link back to the note**               | Start the post with a line that links to the note on your notes site.                                                                                                       |
+| **Text of the link back**               | Shown only when the link back is on. The words before the note title, which is the link. Default: `Canonical version:` (the text used up to 1.3.1). Empty uses the default. |
+| **Point the canonical URL to the note** | Set the post's `canonical_url` to the note on your notes site: the note is the original. Turn it off to make the post the original.                                         |
+| **Listing note**                        | Maintain a vault note linking every post currently published under this preset.                                                                                             |
+| **Listing note path**                   | Vault-relative path. Created with intermediate folders if missing.                                                                                                          |
 
 Both link settings need the **Notes base URL** setting. Presets saved by version 1.3.1 or earlier had one **Canonical URL** switch for both: such a preset gets both settings on (or both off), so it works as before.
 
-When **Point the canonical URL to the note** is off and a post still has the `canonical_url` that the plugin set earlier, the next update of the post clears it. A `canonical_url` that you set by hand in Ghost to another address is kept.
+**If you sync this vault between devices**, update every device to this version before you change these settings: an older version drops the new settings when it saves its own.
+
+When **Point the canonical URL to the note** is off, a `canonical_url` equal to the note URL is cleared at the next update of the post. A `canonical_url` that you set by hand in Ghost to another address is kept. A note that did not change is skipped by the sync, so the field is cleared only at the next sync after a change of the note, or when you run **Sync again every note of a preset**.
 
 Reorder presets in the list using the up / down arrows. The eye icon toggles enabled / disabled without deleting the preset.
 

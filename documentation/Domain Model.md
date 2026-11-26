@@ -19,6 +19,7 @@ Fields:
 - `newsletterSlug` — empty disables email opt-in for this preset.
 - `ghostStatus` — `published` or `draft`.
 - `linkBackToNoteEnabled` — prepends the callout that links back to the note.
+- `linkBackText` — words before the note title in the callout; default `Canonical version:` (also for saved presets without it).
 - `canonicalUrlEnabled` — sets `canonical_url` to the note URL. Off: an update clears a `canonical_url` equal to the note URL (`null`), keeps any other value.
 - Migration (`sanitizePreset`): a saved preset without `linkBackToNoteEnabled` copies `canonicalUrlEnabled` (one flag drove both up to 1.3.1).
 - `listingNoteEnabled`, `listingNotePath` — optional vault index.

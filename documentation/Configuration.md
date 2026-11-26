@@ -60,6 +60,7 @@ interface Preset {
     newsletterSlug: string
     ghostStatus: 'published' | 'draft'
     linkBackToNoteEnabled: boolean // missing in saved data: copied from canonicalUrlEnabled
+    linkBackText: string // default 'Canonical version:'
     canonicalUrlEnabled: boolean
     listingNoteEnabled: boolean
     listingNotePath: string

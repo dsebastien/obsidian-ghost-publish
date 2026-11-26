@@ -96,6 +96,7 @@ src/
     - calls Ghost (update by id, else create as draft when newsletter+email opt-in, else published);
     - upgrades YouTube/link paragraphs to embed/bookmark cards;
     - transitions draft→published with newsletter slug if shouldEmail;
+    - "Sync again" (`resyncPostsForPreset`): same steps over `notesToResync` (Ghost id set), with `ignoreContentHash` and `allowEmail: false`;
     - on update with canonical_url off: sends `canonical_url: null` when the post still holds the note URL;
     - writes ghost_id, synced_at, content_hash, preset id, emailed_at, published, date_published, date_updated, and the post URL (`frontmatter.postUrl` set, post `published`, value changed).
 3. If the preset has `listingNoteEnabled` and a path: `regenerateListingNote(app, preset, refreshedQueue, settings.frontmatter)` — rewrites the listing body via `vault.modify`, then calls `processFrontMatter` to set the configured ignore flag on the listing note itself (the body write wipes any existing frontmatter, so the flag has to be re-established each run).
