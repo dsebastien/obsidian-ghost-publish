@@ -3,6 +3,8 @@ import type { PluginSettings } from '../types/plugin-settings.intf'
 import type { Preset } from '../types/preset.intf'
 import { GhostApiClient } from '../api/ghost-api-client'
 import { syncNote } from './sync-note'
+import type { SyncNoteOptions } from './sync-note'
+import type { QueuedNote } from '../types/news-candidate.intf'
 import { findQueuedNotesForPreset } from './candidate-discovery'
 import { regenerateListingNote } from './news-feed-writer'
 import { emptySummary } from '../types/sync-result.intf'
@@ -66,6 +68,52 @@ export async function publishAllForPreset(
 ): Promise<{ results: SyncResult[]; summary: SyncSummary }> {
     const client = buildGhostClient(app, settings)
     const queue = findQueuedNotesForPreset(app, settings, preset.id)
+    return syncQueue(app, client, settings, preset, queue, {}, onProgress)
+}
+
+/**
+ * Notes that "sync again" pushes: queued for the preset and already on Ghost
+ * (a Ghost id is set). A note never pushed is left to the normal sync, so its
+ * first publish can still send the newsletter.
+ */
+export function notesToResync(app: App, settings: PluginSettings, presetId: string): QueuedNote[] {
+    return findQueuedNotesForPreset(app, settings, presetId).filter((n) => n.hasGhostId)
+}
+
+/**
+ * Push every note of the preset that is already on Ghost again, also when
+ * its content did not change (e.g. to apply changed link or canonical_url
+ * settings to live posts). Same rules as a normal sync, except that no
+ * newsletter email is ever sent.
+ */
+export async function resyncPostsForPreset(
+    app: App,
+    settings: PluginSettings,
+    preset: Preset,
+    client: GhostApiClient = buildGhostClient(app, settings),
+    onProgress?: (current: number, total: number, lastResult: SyncResult) => void
+): Promise<{ results: SyncResult[]; summary: SyncSummary }> {
+    const queue = notesToResync(app, settings, preset.id)
+    return syncQueue(
+        app,
+        client,
+        settings,
+        preset,
+        queue,
+        { ignoreContentHash: true, allowEmail: false },
+        onProgress
+    )
+}
+
+async function syncQueue(
+    app: App,
+    client: GhostApiClient,
+    settings: PluginSettings,
+    preset: Preset,
+    queue: QueuedNote[],
+    options: SyncNoteOptions,
+    onProgress?: (current: number, total: number, lastResult: SyncResult) => void
+): Promise<{ results: SyncResult[]; summary: SyncSummary }> {
     const summary = emptySummary()
     const results: SyncResult[] = []
 
@@ -73,7 +121,7 @@ export async function publishAllForPreset(
         const item = queue[i]!
         let result: SyncResult
         try {
-            result = await syncNote(app, client, settings, preset, item.file)
+            result = await syncNote(app, client, settings, preset, item.file, options)
         } catch (e) {
             const msg = e instanceof Error ? e.message : String(e)
             log(`Sync failed for ${item.file.path}`, 'error', e)

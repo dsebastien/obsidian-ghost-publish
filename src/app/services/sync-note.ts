@@ -2,6 +2,7 @@ import type { App, TFile } from 'obsidian'
 import type { GhostApiClient } from '../api/ghost-api-client'
 import type { GhostPost } from '../types/ghost-api.intf'
 import type { PluginSettings } from '../types/plugin-settings.intf'
+import { postUrlKeyClash } from '../types/plugin-settings.intf'
 import type { Preset } from '../types/preset.intf'
 import type { SyncResult } from '../types/sync-result.intf'
 import { COSMETIC_FM } from '../constants'
@@ -30,13 +31,22 @@ import { log } from '../../utils/log'
  * link-block embeds → optional newsletter dispatch → write metadata back
  * to frontmatter.
  */
+export interface SyncNoteOptions {
+    /** Push even when the content hash matches (the "sync again" command). */
+    ignoreContentHash?: boolean
+    /** False: never send the newsletter, whatever the note asks. Default true. */
+    allowEmail?: boolean
+}
+
 export async function syncNote(
     app: App,
     client: GhostApiClient,
     settings: PluginSettings,
     preset: Preset,
-    file: TFile
+    file: TFile,
+    options: SyncNoteOptions = {}
 ): Promise<SyncResult> {
+    const allowEmail = options.allowEmail ?? true
     const fm = readFrontmatter(app, file)
     const fmKeys = settings.frontmatter
 
@@ -82,7 +92,7 @@ export async function syncNote(
 
     // Unchanged: leave the note untouched. Rewriting syncedAt here would dirty
     // every published note on each run (git noise, sync churn).
-    if (existingGhostId && existingHash === contentHash) {
+    if (existingGhostId && existingHash === contentHash && !options.ignoreContentHash) {
         return {
             path: file.path,
             status: 'unchanged',
@@ -133,7 +143,7 @@ export async function syncNote(
         }
     }
 
-    const html = buildPostHtml(working, title, linkBack ? noteUrl : '')
+    const html = buildPostHtml(working, title, linkBack ? noteUrl : '', preset.linkBackText)
     const customExcerpt =
         typeof fm[fmKeys.excerpt] === 'string' && (fm[fmKeys.excerpt] as string).trim().length > 0
             ? (fm[fmKeys.excerpt] as string)
@@ -184,6 +194,7 @@ export async function syncNote(
 
     if (!postId) {
         shouldEmail =
+            allowEmail &&
             preset.newsletterSlug.trim().length > 0 &&
             fm[fmKeys.emailFlag] === true &&
             !fm[fmKeys.emailedAt]
@@ -219,6 +230,8 @@ export async function syncNote(
     if (shouldEmail) {
         try {
             const current = await client.getPost(postId)
+            // Throws only when Ghost refused. A successful answer without a
+            // post leaves lastPost undefined (URL unknown); the email is recorded.
             lastPost = await client.publishDraft(postId, current.updated_at, preset.newsletterSlug)
             emailed = true
         } catch (e) {
@@ -227,8 +240,15 @@ export async function syncNote(
     }
 
     const postUrlKey = fmKeys.postUrl.trim()
-    const live = postUrlKey ? publicPostUrl(lastPost) : undefined
-    if (live?.note) log(`Post URL not written for ${file.path}: ${live.note}`, 'debug')
+    const clash = postUrlKeyClash(fmKeys)
+    const live = !postUrlKey
+        ? undefined
+        : clash
+          ? { note: `post URL key "${clash}" is already used by another property` }
+          : publicPostUrl(lastPost)
+    if (live?.note) {
+        log(`Post URL not written for ${file.path}: ${live.note}`, clash ? 'warn' : 'debug')
+    }
 
     const nowIso = new Date().toISOString()
     const today = nowIso.slice(0, 10)

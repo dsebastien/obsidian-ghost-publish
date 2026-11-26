@@ -1,6 +1,7 @@
 import { Modal, Notice, Setting, setIcon } from 'obsidian'
 import type { App } from 'obsidian'
 import type { Preset, PresetTagRef } from '../types/preset.intf'
+import { DEFAULT_LINK_BACK_TEXT } from '../types/preset.intf'
 import type { GhostNewsletterSummary, GhostTagSummary } from '../types/ghost-api.intf'
 import { TagInputSuggest } from './tag-suggest'
 import { NOTICE_TIMEOUT_MS } from '../constants'
@@ -83,10 +84,24 @@ export class PresetEditorModal extends Modal {
                 'Start the post with a line that links to the note on your public notes site. Requires the global notes base URL setting.'
             )
             .addToggle((t) =>
-                t
-                    .setValue(this.draft.linkBackToNoteEnabled)
-                    .onChange((v) => (this.draft.linkBackToNoteEnabled = v))
+                t.setValue(this.draft.linkBackToNoteEnabled).onChange((v) => {
+                    this.draft.linkBackToNoteEnabled = v
+                    linkBackTextSetting.settingEl.toggle(v)
+                })
             )
+
+        const linkBackTextSetting = new Setting(contentEl)
+            .setName('Text of the link back')
+            .setDesc(
+                'Shown before the note title, which is the link. Leave empty to use the default text.'
+            )
+            .addText((t) =>
+                t
+                    .setPlaceholder(DEFAULT_LINK_BACK_TEXT)
+                    .setValue(this.draft.linkBackText)
+                    .onChange((v) => (this.draft.linkBackText = v))
+            )
+        linkBackTextSetting.settingEl.toggle(this.draft.linkBackToNoteEnabled)
 
         new Setting(contentEl)
             .setName('Point the canonical URL to the note')
@@ -280,6 +295,7 @@ function clonePreset(p: Preset): Preset {
         newsletterSlug: p.newsletterSlug,
         ghostStatus: p.ghostStatus,
         linkBackToNoteEnabled: p.linkBackToNoteEnabled,
+        linkBackText: p.linkBackText,
         canonicalUrlEnabled: p.canonicalUrlEnabled,
         listingNoteEnabled: p.listingNoteEnabled,
         listingNotePath: p.listingNotePath

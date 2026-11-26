@@ -5,7 +5,7 @@ import type { Draft } from 'immer'
 import { DEFAULT_FRONTMATTER, createDefaultSettings } from './types/plugin-settings.intf'
 import type { FrontmatterPropertyNames, PluginSettings } from './types/plugin-settings.intf'
 import { sanitizePreset } from './types/preset.intf'
-import type { SavedPreset } from './types/preset.intf'
+import type { Preset, SavedPreset } from './types/preset.intf'
 import type { GhostNewsletterSummary, GhostTagSummary } from './types/ghost-api.intf'
 import { GhostPublishSettingTab } from './settings/settings-tab'
 import {
@@ -21,9 +21,15 @@ import { GhostPublishView } from './views/ghost-publish-view'
 import {
     MissingGhostConfigError,
     missingAdminKeyLabel,
+    notesToResync,
     publishAllForPreset,
-    resolveAdminKey
+    resolveAdminKey,
+    resyncPostsForPreset
 } from './services/publish-service'
+import type { SyncResult, SyncSummary } from './types/sync-result.intf'
+import { PresetSuggestModal } from './ui/preset-suggest-modal'
+import { ConfirmModal } from './settings/confirm-modal'
+import { resyncConfirmMessage } from './utils/resync-message.fn'
 import { bootstrapAdminKey, readSecret } from './services/admin-key-secret'
 import { log } from '../utils/log'
 import { registerWhatsNewView } from './whats-new'
@@ -76,6 +82,14 @@ export class GhostPublishPlugin extends Plugin {
             name: 'Sync queued notes for all enabled presets',
             callback: () => {
                 void this.runPublishAllPresets()
+            }
+        })
+
+        this.addCommand({
+            id: 'resync-preset',
+            name: 'Sync again every note of a preset',
+            callback: () => {
+                this.pickPresetToResync()
             }
         })
     }
@@ -156,9 +170,49 @@ export class GhostPublishPlugin extends Plugin {
             new Notice(`Preset not found: ${presetId}`, NOTICE_TIMEOUT_MS)
             return
         }
+        await this.runSync(preset, `Syncing "${preset.name}"…`, () =>
+            publishAllForPreset(this.app, this.settings, preset)
+        )
+    }
+
+    /**
+     * "Sync again every note of a preset": pick the preset, confirm with the
+     * number of live posts it will update, then push them ignoring the
+     * content hash. Never sends a newsletter email.
+     */
+    pickPresetToResync(): void {
+        const presets = this.settings.presets
+        if (presets.length === 0) {
+            new Notice('No presets — nothing to sync.', NOTICE_TIMEOUT_MS)
+            return
+        }
+        new PresetSuggestModal(this.app, presets, (preset) => {
+            const count = notesToResync(this.app, this.settings, preset.id).length
+            if (count === 0) {
+                new Notice(`"${preset.name}" has no notes on Ghost yet.`, NOTICE_TIMEOUT_MS)
+                return
+            }
+            new ConfirmModal(
+                this.app,
+                `Sync again every note of "${preset.name}"`,
+                resyncConfirmMessage(preset.name, count),
+                () => {
+                    void this.runSync(preset, `Syncing "${preset.name}" again…`, () =>
+                        resyncPostsForPreset(this.app, this.settings, preset)
+                    )
+                }
+            ).open()
+        }).open()
+    }
+
+    private async runSync(
+        preset: Preset,
+        startMessage: string,
+        run: () => Promise<{ results: SyncResult[]; summary: SyncSummary }>
+    ): Promise<void> {
         try {
-            new Notice(`Syncing "${preset.name}"…`, NOTICE_TIMEOUT_MS)
-            const { summary, results } = await publishAllForPreset(this.app, this.settings, preset)
+            new Notice(startMessage, NOTICE_TIMEOUT_MS)
+            const { summary, results } = await run()
             const parts = Object.entries(summary)
                 .filter(([, n]) => n > 0)
                 .map(([k, n]) => `${n} ${k}`)

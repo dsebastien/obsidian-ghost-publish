@@ -34,6 +34,11 @@ export interface Preset {
      */
     linkBackToNoteEnabled: boolean
     /**
+     * Text before the link back to the note (the note title is the link).
+     * Empty falls back to DEFAULT_LINK_BACK_TEXT at sync time.
+     */
+    linkBackText: string
+    /**
      * When true, the post's `canonical_url` points to the note on the public
      * mirror. Requires `notesBaseUrl` to resolve. Up to 1.3.1 this one flag
      * also drove the link back; `sanitizePreset` migrates saved presets.
@@ -53,6 +58,9 @@ export interface PresetTagRef {
     visibility: 'public' | 'internal'
 }
 
+/** Text of the link back up to 1.3.1; the default, so existing posts keep it. */
+export const DEFAULT_LINK_BACK_TEXT = 'Canonical version:'
+
 /** Default fields used when adding a new preset from the settings UI. */
 export function newPreset(id: string, name: string): Preset {
     return {
@@ -63,6 +71,7 @@ export function newPreset(id: string, name: string): Preset {
         newsletterSlug: '',
         ghostStatus: 'published',
         linkBackToNoteEnabled: false,
+        linkBackText: DEFAULT_LINK_BACK_TEXT,
         canonicalUrlEnabled: false,
         listingNoteEnabled: false,
         listingNotePath: ''
@@ -99,6 +108,8 @@ export function sanitizePreset(p: SavedPreset): Preset {
             typeof p['linkBackToNoteEnabled'] === 'boolean'
                 ? p['linkBackToNoteEnabled']
                 : canonicalUrlEnabled,
+        linkBackText:
+            typeof p['linkBackText'] === 'string' ? p['linkBackText'] : DEFAULT_LINK_BACK_TEXT,
         canonicalUrlEnabled,
         listingNoteEnabled:
             typeof p['listingNoteEnabled'] === 'boolean' ? p['listingNoteEnabled'] : false,

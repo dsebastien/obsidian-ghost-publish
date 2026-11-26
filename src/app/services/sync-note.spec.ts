@@ -27,6 +27,7 @@ interface Harness {
     frontmatter: Record<string, unknown>
     createPost: PayloadMock
     updatePost: PayloadMock
+    publishDraft: PayloadMock
     processFrontMatter: PayloadMock
     file: TFile
 }
@@ -47,6 +48,8 @@ function harness(opts: {
     created?: GhostPost
     updated?: GhostPost
     published?: GhostPost
+    publishDraft?: () => Promise<GhostPost | undefined>
+    getPost?: () => Promise<GhostPost>
 }): Harness {
     const frontmatter: Record<string, unknown> = { ...opts.frontmatter }
     const processFrontMatter = mock(
@@ -70,14 +73,28 @@ function harness(opts: {
     const updatePost = mock((_id: string, _p: Record<string, unknown>) =>
         Promise.resolve(opts.updated ?? post())
     )
+    const publishDraft = mock(
+        opts.publishDraft ??
+            ((): Promise<GhostPost | undefined> => Promise.resolve(opts.published ?? post()))
+    )
     const client: GhostApiClient = Object.assign({} as GhostApiClient, {
         createPost,
         updatePost,
-        getPost: () => Promise.resolve(opts.existing ?? post()),
-        publishDraft: () => Promise.resolve(opts.published ?? post())
+        getPost:
+            opts.getPost ?? ((): Promise<GhostPost> => Promise.resolve(opts.existing ?? post())),
+        publishDraft
     })
     const file = Object.assign(new TFile(), { path: 'Folder/My Note.md', basename: 'My Note' })
-    return { app, client, frontmatter, createPost, updatePost, processFrontMatter, file }
+    return {
+        app,
+        client,
+        frontmatter,
+        createPost,
+        updatePost,
+        publishDraft,
+        processFrontMatter,
+        file
+    }
 }
 
 function setup(
@@ -380,5 +397,189 @@ describe('syncNote: post URL property', () => {
 
         expect(result.emailed).toBe(true)
         expect(h.frontmatter['ghost_url']).toBe(POST_URL)
+    })
+})
+
+describe('syncNote: text of the link back', () => {
+    it("keeps today's text by default", async () => {
+        const { settings, preset, queued } = setup({ linkBackToNoteEnabled: true })
+        const h = harness({ frontmatter: queued })
+
+        await syncNote(h.app, h.client, settings, preset, h.file)
+
+        expect(htmlOf(h.createPost, 0)).toContain(
+            `<p><em>Canonical version: <a href="${NOTE_URL}">My Note</a>.</em></p>`
+        )
+    })
+
+    it('uses the text of the preset', async () => {
+        const { settings, preset, queued } = setup({
+            linkBackToNoteEnabled: true,
+            linkBackText: 'This appeared first in my notes:'
+        })
+        const h = harness({ frontmatter: queued })
+
+        await syncNote(h.app, h.client, settings, preset, h.file)
+
+        const html = htmlOf(h.createPost, 0)
+        expect(html).toContain(
+            `<p><em>This appeared first in my notes: <a href="${NOTE_URL}">My Note</a>.</em></p>`
+        )
+        expect(html).not.toContain('Canonical version')
+    })
+
+    it('falls back to the default text when the text is empty', async () => {
+        const { settings, preset, queued } = setup({
+            linkBackToNoteEnabled: true,
+            linkBackText: '   '
+        })
+        const h = harness({ frontmatter: queued })
+
+        await syncNote(h.app, h.client, settings, preset, h.file)
+
+        expect(htmlOf(h.createPost, 0)).toContain('<p><em>Canonical version: <a')
+    })
+
+    it('escapes the text of the preset', async () => {
+        const { settings, preset, queued } = setup({
+            linkBackToNoteEnabled: true,
+            linkBackText: 'Notes <b>&</b>'
+        })
+        const h = harness({ frontmatter: queued })
+
+        await syncNote(h.app, h.client, settings, preset, h.file)
+
+        expect(htmlOf(h.createPost, 0)).toContain('Notes &lt;b&gt;&amp;&lt;/b&gt; <a')
+    })
+})
+
+describe('syncNote: no notes base URL', () => {
+    it('sends no canonical_url null when notesBaseUrl is empty', async () => {
+        const { settings, preset, fmKeys, queued } = setup(
+            { linkBackToNoteEnabled: true },
+            { notesBaseUrl: '' }
+        )
+        const h = harness({
+            frontmatter: { ...queued, [fmKeys.ghostId]: 'post-1', [fmKeys.contentHash]: 'old' },
+            existing: post({ canonical_url: NOTE_URL })
+        })
+
+        await syncNote(h.app, h.client, settings, preset, h.file)
+
+        expect(payloadOf(h.updatePost, 1)).not.toHaveProperty('canonical_url')
+    })
+})
+
+describe('syncNote: newsletter dispatch', () => {
+    function emailSetup(): ReturnType<typeof setup> {
+        const s = setup()
+        s.settings.frontmatter = { ...s.settings.frontmatter, postUrl: 'ghost_url' }
+        s.preset.newsletterSlug = 'weekly'
+        s.queued[s.fmKeys.emailFlag] = true
+        return s
+    }
+
+    it('records the email when Ghost answers the publish without a post', async () => {
+        const { settings, preset, fmKeys, queued } = emailSetup()
+        const h = harness({
+            frontmatter: queued,
+            created: post({ status: 'draft', url: PREVIEW_URL }),
+            publishDraft: () => Promise.resolve(undefined)
+        })
+
+        const result = await syncNote(h.app, h.client, settings, preset, h.file)
+
+        expect(result.emailed).toBe(true)
+        expect(typeof h.frontmatter[fmKeys.emailedAt]).toBe('string')
+        expect(h.frontmatter).not.toHaveProperty('ghost_url')
+    })
+
+    it('does not record an email when the publish fails', async () => {
+        const { settings, preset, fmKeys, queued } = emailSetup()
+        const h = harness({
+            frontmatter: queued,
+            created: post({ status: 'draft', url: PREVIEW_URL }),
+            publishDraft: () => Promise.reject(new Error('Request failed with status 500'))
+        })
+
+        const result = await syncNote(h.app, h.client, settings, preset, h.file)
+
+        expect(result.status).toBe('created')
+        expect(result.emailed).toBe(false)
+        expect(h.frontmatter).not.toHaveProperty(fmKeys.emailedAt)
+        expect(h.frontmatter[fmKeys.ghostId]).toBe('post-1')
+        expect(h.frontmatter).not.toHaveProperty('ghost_url')
+        expect(result.postUrlNote).toContain('draft')
+    })
+})
+
+describe('syncNote: post URL key that clashes with another property', () => {
+    it('does not overwrite a managed property', async () => {
+        const s = setup()
+        s.settings.frontmatter = { ...s.settings.frontmatter, postUrl: s.fmKeys.syncedAt }
+        const h = harness({ frontmatter: s.queued })
+
+        const result = await syncNote(h.app, h.client, s.settings, s.preset, h.file)
+
+        expect(h.frontmatter[s.fmKeys.syncedAt]).not.toBe(POST_URL)
+        expect(result.postUrl).toBeUndefined()
+        expect(result.postUrlNote).toContain(s.fmKeys.syncedAt)
+    })
+
+    it('does not overwrite a cosmetic property', async () => {
+        const s = setup()
+        s.settings.frontmatter = { ...s.settings.frontmatter, postUrl: 'published' }
+        const h = harness({ frontmatter: s.queued })
+
+        const result = await syncNote(h.app, h.client, s.settings, s.preset, h.file)
+
+        expect(h.frontmatter['published']).toBe(true)
+        expect(result.postUrlNote).toContain('published')
+    })
+})
+
+describe('syncNote: sync again (ignore the content hash, no email)', () => {
+    it('updates a note whose content did not change', async () => {
+        const { settings, preset, fmKeys, queued } = setup()
+        const h = harness({
+            frontmatter: {
+                ...queued,
+                [fmKeys.ghostId]: 'post-1',
+                [fmKeys.contentHash]: await sha256Hex(BODY)
+            }
+        })
+
+        const result = await syncNote(h.app, h.client, settings, preset, h.file, {
+            ignoreContentHash: true,
+            allowEmail: false
+        })
+
+        expect(result.status).toBe('updated')
+        expect(h.updatePost).toHaveBeenCalledTimes(1)
+    })
+
+    it('never sends the newsletter, even when the post is recreated', async () => {
+        const { settings, preset, fmKeys, queued } = setup()
+        preset.newsletterSlug = 'weekly'
+        const h = harness({
+            frontmatter: {
+                ...queued,
+                [fmKeys.emailFlag]: true,
+                [fmKeys.ghostId]: 'gone',
+                [fmKeys.contentHash]: await sha256Hex(BODY)
+            },
+            getPost: () => Promise.reject(new Error('Request failed with status 404'))
+        })
+
+        const result = await syncNote(h.app, h.client, settings, preset, h.file, {
+            ignoreContentHash: true,
+            allowEmail: false
+        })
+
+        expect(result.status).toBe('recreated')
+        expect(payloadOf(h.createPost, 0)['status']).toBe('published')
+        expect(h.publishDraft).not.toHaveBeenCalled()
+        expect(result.emailed).toBe(false)
+        expect(h.frontmatter).not.toHaveProperty(fmKeys.emailedAt)
     })
 })

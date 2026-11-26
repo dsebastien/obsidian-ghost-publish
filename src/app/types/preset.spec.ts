@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { newPreset, sanitizePreset } from './preset.intf'
+import { DEFAULT_LINK_BACK_TEXT, newPreset, sanitizePreset } from './preset.intf'
 
 describe('newPreset', () => {
     it('returns a preset enabled by default', () => {
@@ -16,6 +16,8 @@ describe('newPreset', () => {
         expect(p.ghostStatus).toBe('published')
         expect(p.canonicalUrlEnabled).toBe(false)
         expect(p.linkBackToNoteEnabled).toBe(false)
+        expect(p.linkBackText).toBe(DEFAULT_LINK_BACK_TEXT)
+        expect(DEFAULT_LINK_BACK_TEXT).toBe('Canonical version:')
         expect(p.listingNoteEnabled).toBe(false)
         expect(p.listingNotePath).toBe('')
     })
@@ -57,6 +59,16 @@ describe('sanitizePreset', () => {
         })
         expect(q.linkBackToNoteEnabled).toBe(false)
         expect(q.canonicalUrlEnabled).toBe(true)
+    })
+
+    it("gives a saved preset without a link text today's text", () => {
+        expect(sanitizePreset({ ...base }).linkBackText).toBe(DEFAULT_LINK_BACK_TEXT)
+        expect(sanitizePreset({ ...base, linkBackText: 3 }).linkBackText).toBe(
+            DEFAULT_LINK_BACK_TEXT
+        )
+        expect(sanitizePreset({ ...base, linkBackText: 'First in my notes:' }).linkBackText).toBe(
+            'First in my notes:'
+        )
     })
 
     it('fills the other fields with defaults', () => {

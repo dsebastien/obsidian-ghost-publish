@@ -1,6 +1,7 @@
 import type { Preset } from './preset.intf'
 import { DEFAULT_ADMIN_KEY_SECRET_NAME } from '../services/admin-key-secret'
 import type { GhostNewsletterSummary, GhostTagSummary } from './ghost-api.intf'
+import { COSMETIC_FM } from '../constants'
 
 /**
  * Plugin settings, persisted via Obsidian's loadData / saveData.
@@ -89,6 +90,24 @@ export const DEFAULT_FRONTMATTER: FrontmatterPropertyNames = {
     emailedAt: 'ghost_publish_emailed_at',
     excerpt: 'ghost_publish_excerpt',
     postUrl: ''
+}
+
+/**
+ * The property that the post URL key clashes with, or '' when it is free (or
+ * off). The key must not overwrite a property that the plugin manages, a
+ * cosmetic one it writes, or the title it reads.
+ */
+export function postUrlKeyClash(fm: FrontmatterPropertyNames): string {
+    const key = fm.postUrl.trim()
+    if (!key) return ''
+    const others: string[] = [
+        ...(Object.keys(fm) as (keyof FrontmatterPropertyNames)[])
+            .filter((k) => k !== 'postUrl')
+            .map((k) => fm[k].trim()),
+        ...Object.values(COSMETIC_FM),
+        'title'
+    ]
+    return others.includes(key) ? key : ''
 }
 
 /**

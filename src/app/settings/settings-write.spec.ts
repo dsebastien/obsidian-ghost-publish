@@ -205,6 +205,27 @@ describe('setControlValue', () => {
         expect(plugin.settings.frontmatter.postUrl).toBe('')
     })
 
+    test('refuses a post URL key that another property already uses', async () => {
+        const { tab, plugin, saveData } = createHarness()
+
+        await expectRejection(
+            tab.setControlValue('frontmatter.postUrl', plugin.settings.frontmatter.syncedAt),
+            'already'
+        )
+        await expectRejection(tab.setControlValue('frontmatter.postUrl', 'date_updated'), 'already')
+        await expectRejection(tab.setControlValue('frontmatter.postUrl', 'title'), 'already')
+        expect(saveData).not.toHaveBeenCalled()
+        expect(plugin.settings.frontmatter.postUrl).toBe('')
+    })
+
+    test('refuses to give another property the name of the post URL key', async () => {
+        const { tab, plugin } = createHarness()
+        await tab.setControlValue('frontmatter.postUrl', 'ghost_url')
+
+        await expectRejection(tab.setControlValue('frontmatter.syncedAt', 'ghost_url'), 'already')
+        expect(plugin.settings.frontmatter.syncedAt).not.toBe('ghost_url')
+    })
+
     test('an equal value does not queue a write', async () => {
         // Every keystroke calls setControlValue; parsing whitespace or a
         // malformed line produces an equal-but-new array/object, and queuing

@@ -2,7 +2,7 @@ import { Notice, PluginSettingTab, SecretComponent, Setting, setIcon } from 'obs
 import type { App, SettingDefinitionItem } from 'obsidian'
 import type { GhostPublishPlugin } from '../plugin'
 import type { PluginSettings } from '../types/plugin-settings.intf'
-import { DEFAULT_FRONTMATTER } from '../types/plugin-settings.intf'
+import { DEFAULT_FRONTMATTER, postUrlKeyClash } from '../types/plugin-settings.intf'
 import { newPreset } from '../types/preset.intf'
 import type { Preset } from '../types/preset.intf'
 import { refreshGhostMetadata } from '../services/ghost-metadata-cache'
@@ -446,6 +446,14 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                 this.plugin.settings.frontmatter[field as keyof PluginSettings['frontmatter']]
             ) {
                 return
+            }
+            const clash = postUrlKeyClash({
+                ...this.plugin.settings.frontmatter,
+                [field]: next
+            })
+            if (clash) {
+                new Notice(`"${clash}" is already used by another property.`)
+                throw new Error(`Setting "${key}": "${clash}" is already used by another property.`)
             }
             await this.plugin.updateSettings((d) => {
                 d.frontmatter[field as keyof PluginSettings['frontmatter']] = next
