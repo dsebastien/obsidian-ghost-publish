@@ -1,5 +1,6 @@
 import type { App, TFile } from 'obsidian'
 import type { GhostApiClient } from '../api/ghost-api-client'
+import type { GhostPost } from '../types/ghost-api.intf'
 import type { PluginSettings } from '../types/plugin-settings.intf'
 import type { Preset } from '../types/preset.intf'
 import type { SyncResult } from '../types/sync-result.intf'
@@ -60,8 +61,14 @@ export async function syncNote(
     const raw = await app.vault.read(file)
     const { body } = splitFrontmatter(raw)
 
-    const useCanonical = preset.canonicalUrlEnabled && settings.notesBaseUrl.trim().length > 0
-    const canonicalUrl = useCanonical ? vaultPathToUrl(settings.notesBaseUrl, file.path) : ''
+    // URL of the note on the public mirror. Used by the link back in the
+    // body, by canonical_url, and to clear a canonical_url set earlier.
+    const noteUrl =
+        settings.notesBaseUrl.trim().length > 0
+            ? vaultPathToUrl(settings.notesBaseUrl, file.path)
+            : ''
+    const linkBack = preset.linkBackToNoteEnabled && noteUrl !== ''
+    const setCanonical = preset.canonicalUrlEnabled && noteUrl !== ''
 
     const fmTitle = fm['title']
     const title = typeof fmTitle === 'string' && fmTitle.trim().length > 0 ? fmTitle : file.basename
@@ -84,13 +91,13 @@ export async function syncNote(
         }
     }
 
-    if (useCanonical && !settings.skipCanonicalProbe) {
-        const ok = await canonicalProbe(canonicalUrl)
+    if ((linkBack || setCanonical) && !settings.skipCanonicalProbe) {
+        const ok = await canonicalProbe(noteUrl)
         if (!ok) {
             return {
                 path: file.path,
                 status: 'skipped',
-                reason: `canonical URL not reachable (${canonicalUrl})`
+                reason: `canonical URL not reachable (${noteUrl})`
             }
         }
     }
@@ -126,7 +133,7 @@ export async function syncNote(
         }
     }
 
-    const html = buildPostHtml(working, title, canonicalUrl)
+    const html = buildPostHtml(working, title, linkBack ? noteUrl : '')
     const customExcerpt =
         typeof fm[fmKeys.excerpt] === 'string' && (fm[fmKeys.excerpt] as string).trim().length > 0
             ? (fm[fmKeys.excerpt] as string)
@@ -136,6 +143,7 @@ export async function syncNote(
     let action: SyncResult['status'] = 'created'
     let shouldEmail = false
     let emailed = false
+    let lastPost: GhostPost | undefined
 
     const tagsPayload = preset.tags.map((t) => ({ name: t.name, visibility: t.visibility }))
 
@@ -150,9 +158,17 @@ export async function syncNote(
                 custom_excerpt: customExcerpt,
                 updated_at: existing.updated_at
             }
-            if (useCanonical) updatePayload['canonical_url'] = canonicalUrl
+            if (setCanonical) {
+                updatePayload['canonical_url'] = noteUrl
+            } else if (noteUrl && existing.canonical_url === noteUrl) {
+                // The field is off but the post still points to the note
+                // (set by an earlier sync): Ghost clears the field on null.
+                // A canonical_url set by hand to another address is kept.
+                updatePayload['canonical_url'] = null
+            }
             const updated = await client.updatePost(postId, updatePayload)
             postId = updated.id
+            lastPost = updated
             action = 'updated'
         } catch (e) {
             const msg = e instanceof Error ? e.message : String(e)
@@ -178,9 +194,10 @@ export async function syncNote(
             tags: tagsPayload,
             custom_excerpt: customExcerpt
         }
-        if (useCanonical) createPayload['canonical_url'] = canonicalUrl
+        if (setCanonical) createPayload['canonical_url'] = noteUrl
         const created = await client.createPost(createPayload)
         postId = created.id
+        lastPost = created
         if (action !== 'recreated') action = 'created'
     }
 
@@ -202,12 +219,16 @@ export async function syncNote(
     if (shouldEmail) {
         try {
             const current = await client.getPost(postId)
-            await client.publishDraft(postId, current.updated_at, preset.newsletterSlug)
+            lastPost = await client.publishDraft(postId, current.updated_at, preset.newsletterSlug)
             emailed = true
         } catch (e) {
             log(`Email dispatch failed for ${postId}`, 'error', e)
         }
     }
+
+    const postUrlKey = fmKeys.postUrl.trim()
+    const live = postUrlKey ? publicPostUrl(lastPost) : undefined
+    if (live?.note) log(`Post URL not written for ${file.path}: ${live.note}`, 'debug')
 
     const nowIso = new Date().toISOString()
     const today = nowIso.slice(0, 10)
@@ -219,6 +240,10 @@ export async function syncNote(
         frontmatter[fmKeys.contentHash] = contentHash
         frontmatter[fmKeys.preset] = capturedPresetId
         if (emailed) frontmatter[fmKeys.emailedAt] = nowIso
+        // Only on change: no needless rewrite of the property.
+        if (live?.url && frontmatter[postUrlKey] !== live.url) {
+            frontmatter[postUrlKey] = live.url
+        }
         frontmatter[COSMETIC_FM.published] = preset.ghostStatus === 'published'
         if (!frontmatter[COSMETIC_FM.datePublished]) {
             frontmatter[COSMETIC_FM.datePublished] = today
@@ -231,8 +256,27 @@ export async function syncNote(
         status: action,
         postId,
         editUrl: ghostEditorUrl(settings.ghostUrl, postId),
-        emailed
+        emailed,
+        ...(live?.url ? { postUrl: live.url } : {}),
+        ...(live?.note ? { postUrlNote: live.note } : {})
     }
+}
+
+/**
+ * The public URL of a post, from the post that Ghost returned last. A draft
+ * or scheduled post has none yet: the Admin API gives a preview URL
+ * (`/p/<uuid>/`) for it, which must not go into the note.
+ */
+export function publicPostUrl(post: GhostPost | undefined): { url?: string; note?: string } {
+    const status = post?.status ?? 'unknown'
+    if (status !== 'published') {
+        return { note: `post is ${status}: no public URL yet` }
+    }
+    const url = post?.url?.trim() ?? ''
+    if (!url || /\/(p\/[^/]+|404)\/?$/.test(url)) {
+        return { note: 'Ghost returned no public URL for the post' }
+    }
+    return { url }
 }
 
 function ghostEditorUrl(ghostUrl: string, postId: string): string {

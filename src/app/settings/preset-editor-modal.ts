@@ -75,12 +75,23 @@ export class PresetEditorModal extends Modal {
         this.renderTagsSection(contentEl)
         this.renderNewsletterSection(contentEl)
 
-        new Setting(contentEl).setName('Canonical URL').setHeading()
+        new Setting(contentEl).setName('Link to the note').setHeading()
 
         new Setting(contentEl)
-            .setName('Set canonical_url')
+            .setName('Link back to the note')
             .setDesc(
-                'When enabled, the post receives canonical_url and a "Canonical version" callout. Requires the global Notes base URL setting.'
+                'Start the post with a line that links to the note on your public notes site. Requires the global notes base URL setting.'
+            )
+            .addToggle((t) =>
+                t
+                    .setValue(this.draft.linkBackToNoteEnabled)
+                    .onChange((v) => (this.draft.linkBackToNoteEnabled = v))
+            )
+
+        new Setting(contentEl)
+            .setName('Point the canonical URL to the note')
+            .setDesc(
+                'Tell search engines that the note on your public notes site is the original. Turn it off to make the post the original. Requires the global notes base URL setting.'
             )
             .addToggle((t) =>
                 t
@@ -268,6 +279,7 @@ function clonePreset(p: Preset): Preset {
         tags: p.tags.map((t) => ({ name: t.name, visibility: t.visibility })),
         newsletterSlug: p.newsletterSlug,
         ghostStatus: p.ghostStatus,
+        linkBackToNoteEnabled: p.linkBackToNoteEnabled,
         canonicalUrlEnabled: p.canonicalUrlEnabled,
         listingNoteEnabled: p.listingNoteEnabled,
         listingNotePath: p.listingNotePath

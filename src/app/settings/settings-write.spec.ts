@@ -194,6 +194,17 @@ describe('setControlValue', () => {
         expect(tab.getControlValue('frontmatter.ghostId')).toBe('ghost_id')
     })
 
+    test('the post URL property is off by default, and can be set and cleared', async () => {
+        const { tab, plugin } = createHarness()
+        expect(tab.getControlValue('frontmatter.postUrl')).toBe('')
+
+        await tab.setControlValue('frontmatter.postUrl', ' ghost_url ')
+        expect(plugin.settings.frontmatter.postUrl).toBe('ghost_url')
+
+        await tab.setControlValue('frontmatter.postUrl', '  ')
+        expect(plugin.settings.frontmatter.postUrl).toBe('')
+    })
+
     test('an equal value does not queue a write', async () => {
         // Every keystroke calls setControlValue; parsing whitespace or a
         // malformed line produces an equal-but-new array/object, and queuing

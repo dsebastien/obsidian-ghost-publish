@@ -1,6 +1,6 @@
 /**
  * A reusable publication configuration: which tags to attach, whether to send
- * a newsletter on first publish, whether to set canonical_url, and so on.
+ * a newsletter on first publish, whether to link back to the note, and so on.
  *
  * Frontmatter property names are NOT stored per preset — they live in the
  * global PluginSettings.frontmatter object. A note can be published under
@@ -29,8 +29,14 @@ export interface Preset {
      */
     ghostStatus: 'published' | 'draft'
     /**
-     * When true, the published post carries `canonical_url` and a callout
-     * linking back to the public mirror. Requires `notesBaseUrl` to resolve.
+     * When true, the post body starts with a callout that links back to the
+     * note on the public mirror. Requires `notesBaseUrl` to resolve.
+     */
+    linkBackToNoteEnabled: boolean
+    /**
+     * When true, the post's `canonical_url` points to the note on the public
+     * mirror. Requires `notesBaseUrl` to resolve. Up to 1.3.1 this one flag
+     * also drove the link back; `sanitizePreset` migrates saved presets.
      */
     canonicalUrlEnabled: boolean
     /**
@@ -56,8 +62,46 @@ export function newPreset(id: string, name: string): Preset {
         tags: [],
         newsletterSlug: '',
         ghostStatus: 'published',
+        linkBackToNoteEnabled: false,
         canonicalUrlEnabled: false,
         listingNoteEnabled: false,
         listingNotePath: ''
+    }
+}
+
+/** A saved preset as read from data.json: only id and name are checked. */
+export type SavedPreset = { id: string; name: string } & Record<string, unknown>
+
+/**
+ * Rebuild a preset from saved data, with defaults for missing or invalid
+ * fields. Migration: a preset saved before `linkBackToNoteEnabled` existed
+ * takes it from `canonicalUrlEnabled`, which used to drive both the link
+ * back and the field, so an existing preset keeps both on or both off.
+ */
+export function sanitizePreset(p: SavedPreset): Preset {
+    const canonicalUrlEnabled =
+        typeof p['canonicalUrlEnabled'] === 'boolean' ? p['canonicalUrlEnabled'] : false
+    return {
+        id: p.id,
+        name: p.name,
+        enabled: typeof p['enabled'] === 'boolean' ? p['enabled'] : true,
+        tags: Array.isArray(p['tags'])
+            ? (p['tags'] as unknown[]).filter(
+                  (t): t is PresetTagRef =>
+                      typeof t === 'object' &&
+                      t !== null &&
+                      typeof (t as { name?: unknown }).name === 'string'
+              )
+            : [],
+        newsletterSlug: typeof p['newsletterSlug'] === 'string' ? p['newsletterSlug'] : '',
+        ghostStatus: p['ghostStatus'] === 'draft' ? 'draft' : 'published',
+        linkBackToNoteEnabled:
+            typeof p['linkBackToNoteEnabled'] === 'boolean'
+                ? p['linkBackToNoteEnabled']
+                : canonicalUrlEnabled,
+        canonicalUrlEnabled,
+        listingNoteEnabled:
+            typeof p['listingNoteEnabled'] === 'boolean' ? p['listingNoteEnabled'] : false,
+        listingNotePath: typeof p['listingNotePath'] === 'string' ? p['listingNotePath'] : ''
     }
 }

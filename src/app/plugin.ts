@@ -4,7 +4,8 @@ import { produce } from 'immer'
 import type { Draft } from 'immer'
 import { DEFAULT_FRONTMATTER, createDefaultSettings } from './types/plugin-settings.intf'
 import type { FrontmatterPropertyNames, PluginSettings } from './types/plugin-settings.intf'
-import type { Preset } from './types/preset.intf'
+import { sanitizePreset } from './types/preset.intf'
+import type { SavedPreset } from './types/preset.intf'
 import type { GhostNewsletterSummary, GhostTagSummary } from './types/ghost-api.intf'
 import { GhostPublishSettingTab } from './settings/settings-tab'
 import {
@@ -271,7 +272,9 @@ export class GhostPublishPlugin extends Plugin {
                 draft.newslettersFetchedAt = loaded.newslettersFetchedAt
 
             if (Array.isArray(loaded.presets)) {
-                draft.presets = loaded.presets.filter(isPresetLike).map((p) => sanitizePreset(p))
+                draft.presets = (loaded.presets as unknown[])
+                    .filter(isPresetLike)
+                    .map((p) => sanitizePreset(p))
             }
         })
 
@@ -401,7 +404,7 @@ function isNewsletterSummary(n: unknown): n is GhostNewsletterSummary {
     )
 }
 
-function isPresetLike(p: unknown): p is Preset {
+function isPresetLike(p: unknown): p is SavedPreset {
     return (
         typeof p === 'object' &&
         p !== null &&
@@ -420,24 +423,4 @@ function mergeFrontmatter(
         if (typeof v === 'string') out[key] = v
     }
     return out
-}
-
-function sanitizePreset(p: Preset): Preset {
-    return {
-        id: p.id,
-        name: p.name,
-        enabled: typeof p.enabled === 'boolean' ? p.enabled : true,
-        tags: Array.isArray(p.tags)
-            ? p.tags.filter(
-                  (t) => typeof t === 'object' && t !== null && typeof t.name === 'string'
-              )
-            : [],
-        newsletterSlug: typeof p.newsletterSlug === 'string' ? p.newsletterSlug : '',
-        ghostStatus: p.ghostStatus === 'draft' ? 'draft' : 'published',
-        canonicalUrlEnabled:
-            typeof p.canonicalUrlEnabled === 'boolean' ? p.canonicalUrlEnabled : false,
-        listingNoteEnabled:
-            typeof p.listingNoteEnabled === 'boolean' ? p.listingNoteEnabled : false,
-        listingNotePath: typeof p.listingNotePath === 'string' ? p.listingNotePath : ''
-    }
 }

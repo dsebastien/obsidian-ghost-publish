@@ -130,16 +130,22 @@ export class GhostApiClient {
 
     /**
      * Publish a draft, optionally triggering a newsletter email. Ghost only
-     * fires the newsletter on the draft→published transition.
+     * fires the newsletter on the draft→published transition. Returns the
+     * published post (its `url` is the public one).
      */
-    async publishDraft(postId: string, updatedAt: string, newsletterSlug?: string): Promise<void> {
+    async publishDraft(
+        postId: string,
+        updatedAt: string,
+        newsletterSlug?: string
+    ): Promise<GhostPost> {
         const qs = newsletterSlug ? `?newsletter=${encodeURIComponent(newsletterSlug)}` : ''
-        await this.request({
+        const res = await this.request({
             method: 'PUT',
             path: `/ghost/api/admin/posts/${encodeURIComponent(postId)}/${qs}`,
             body: JSON.stringify({ posts: [{ status: 'published', updated_at: updatedAt }] }),
             contentType: 'application/json'
         })
+        return (res.json as GhostPostsResponse).posts[0]!
     }
 
     async uploadImage(filename: string, data: ArrayBuffer, contentType: string): Promise<string> {

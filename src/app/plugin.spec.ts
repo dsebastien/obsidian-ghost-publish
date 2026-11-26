@@ -167,3 +167,35 @@ describe('admin key across devices', () => {
         expect(c.secrets.size).toBe(0)
     })
 })
+
+describe('settings migration', () => {
+    test('a saved preset with canonical on keeps both the note link and the field', async () => {
+        const vault: { disk: Disk } = {
+            disk: {
+                presets: [
+                    { id: 'on', name: 'On', canonicalUrlEnabled: true },
+                    { id: 'off', name: 'Off', canonicalUrlEnabled: false }
+                ]
+            }
+        }
+        const a = createDevice(vault)
+        await a.plugin.loadSettings()
+
+        const [on, off] = a.plugin.settings.presets
+        expect(on?.linkBackToNoteEnabled).toBe(true)
+        expect(on?.canonicalUrlEnabled).toBe(true)
+        expect(off?.linkBackToNoteEnabled).toBe(false)
+        expect(off?.canonicalUrlEnabled).toBe(false)
+    })
+
+    test('the post URL property is off unless a key is saved', async () => {
+        const vault: { disk: Disk } = { disk: { ghostUrl: 'https://blog.example.com' } }
+        const a = createDevice(vault)
+        await a.plugin.loadSettings()
+        expect(a.plugin.settings.frontmatter.postUrl).toBe('')
+
+        vault.disk = { frontmatter: { postUrl: 'ghost_url' } }
+        await a.plugin.loadSettings()
+        expect(a.plugin.settings.frontmatter.postUrl).toBe('ghost_url')
+    })
+})

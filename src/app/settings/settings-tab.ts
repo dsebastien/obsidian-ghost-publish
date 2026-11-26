@@ -19,6 +19,8 @@ const FRONTMATTER_FIELDS: {
     key: keyof typeof DEFAULT_FRONTMATTER
     label: string
     desc: string
+    /** Hint shown when the default is empty (the field is off by default). */
+    placeholder?: string
 }[] = [
     {
         key: 'eligibility',
@@ -65,6 +67,12 @@ const FRONTMATTER_FIELDS: {
         key: 'excerpt',
         label: 'Excerpt',
         desc: 'Optional. Overrides the auto-derived Ghost custom_excerpt.'
+    },
+    {
+        key: 'postUrl',
+        label: 'Post URL',
+        desc: 'Optional. After each create or update, write the public address of the post into this property. Nothing is written for a draft or a scheduled post. Leave empty to turn it off.',
+        placeholder: 'ghost_publish_url'
     }
 ]
 
@@ -206,7 +214,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                 items: [
                     {
                         name: 'Notes base URL',
-                        desc: 'Public URL of a mirror that exposes your vault notes. Required for any preset that sets canonical_url, and for resolving [[wikilinks]] to public URLs.',
+                        desc: 'Public URL of a mirror that exposes your vault notes. Required for any preset that links back to the note or sets canonical_url, and for resolving [[wikilinks]] to public URLs.',
                         control: {
                             type: 'text',
                             key: 'notesBaseUrl',
@@ -267,7 +275,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                         control: {
                             type: 'text' as const,
                             key: `frontmatter.${f.key}`,
-                            placeholder: DEFAULT_FRONTMATTER[f.key]
+                            placeholder: f.placeholder ?? DEFAULT_FRONTMATTER[f.key]
                         }
                     }))
                 ]
@@ -342,7 +350,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
                 items: [
                     {
                         name: 'Skip canonical-URL probe',
-                        desc: 'Push to Ghost without verifying the canonical URL is live first. Faster, but a 404 may leak to readers.',
+                        desc: 'Push to Ghost without checking first that the note is live on your notes site. Faster, but the link back or canonical_url may lead to a 404.',
                         control: { type: 'toggle', key: 'skipCanonicalProbe' }
                     },
                     {
@@ -756,6 +764,7 @@ export class GhostPublishSettingTab extends PluginSettingTab {
         parts.push(p.enabled ? 'enabled' : 'disabled')
         parts.push(`${p.tags.length} tag${p.tags.length === 1 ? '' : 's'}`)
         if (p.newsletterSlug) parts.push(`newsletter: ${p.newsletterSlug}`)
+        if (p.linkBackToNoteEnabled) parts.push('link to note')
         if (p.canonicalUrlEnabled) parts.push('canonical')
         if (p.listingNoteEnabled) parts.push('listing')
         parts.push(`status: ${p.ghostStatus}`)

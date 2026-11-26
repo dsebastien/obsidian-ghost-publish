@@ -12,6 +12,10 @@ export interface SyncResult {
     reason?: string
     /** Whether the newsletter email was dispatched on this sync. */
     emailed?: boolean
+    /** Public URL of the post, when the post URL property is on and the post is live. */
+    postUrl?: string
+    /** Why the post URL property was not written (e.g. the post is a draft). */
+    postUrlNote?: string
 }
 
 export interface SyncSummary {

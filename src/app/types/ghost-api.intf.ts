@@ -7,6 +7,11 @@ export interface GhostPost {
     title?: string
     slug?: string
     status?: string
+    /**
+     * Public URL for a published post. For a draft or scheduled post the
+     * Admin API returns a preview URL (`/p/<uuid>/`) instead.
+     */
+    url?: string
     updated_at: string
     canonical_url?: string | null
     custom_excerpt?: string | null

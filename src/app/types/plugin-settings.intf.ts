@@ -27,7 +27,7 @@ export interface PluginSettings {
     /** ISO date of the first migration to SecretStorage (grace period start). */
     legacySecretMigratedAt?: string
 
-    // ─── Public mirror (for canonical_url presets) ──────────────────────────
+    // ─── Public mirror (link back to the note, canonical_url) ───────────────
     notesBaseUrl: string
 
     // ─── Content processing (global, shared by all presets) ─────────────────
@@ -70,6 +70,11 @@ export interface FrontmatterPropertyNames {
     contentHash: string
     emailedAt: string
     excerpt: string
+    /**
+     * Optional. Receives the public URL of the Ghost post after a create or
+     * an update. Empty (the default) turns the feature off.
+     */
+    postUrl: string
 }
 
 export const DEFAULT_FRONTMATTER: FrontmatterPropertyNames = {
@@ -82,7 +87,8 @@ export const DEFAULT_FRONTMATTER: FrontmatterPropertyNames = {
     ghostId: 'ghost_publish_id',
     contentHash: 'ghost_publish_content_hash',
     emailedAt: 'ghost_publish_emailed_at',
-    excerpt: 'ghost_publish_excerpt'
+    excerpt: 'ghost_publish_excerpt',
+    postUrl: ''
 }
 
 /**
