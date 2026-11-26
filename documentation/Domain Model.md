@@ -18,7 +18,9 @@ Fields:
 - `tags: PresetTagRef[]` — ordered. The first is Ghost's primary tag.
 - `newsletterSlug` — empty disables email opt-in for this preset.
 - `ghostStatus` — `published` or `draft`.
-- `canonicalUrlEnabled` — sets `canonical_url` + the callout when true.
+- `linkBackToNoteEnabled` — prepends the callout that links back to the note.
+- `canonicalUrlEnabled` — sets `canonical_url` to the note URL. Off: an update clears a `canonical_url` equal to the note URL (`null`), keeps any other value.
+- Migration (`sanitizePreset`): a saved preset without `linkBackToNoteEnabled` copies `canonicalUrlEnabled` (one flag drove both up to 1.3.1).
 - `listingNoteEnabled`, `listingNotePath` — optional vault index.
 
 ### Candidate
@@ -45,6 +47,7 @@ Property names come from `PluginSettings.frontmatter`. Defaults:
 | contentHash  | `ghost_publish_content_hash` | sync                                | sync                |
 | emailedAt    | `ghost_publish_emailed_at`   | sync, recent tab                    | sync                |
 | excerpt      | `ghost_publish_excerpt`      | sync                                | —                   |
+| postUrl      | `""` (off)                   | —                                   | sync                |
 
 Cosmetic fields (always at default names):
 

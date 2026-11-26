@@ -90,13 +90,14 @@ src/
     - reads frontmatter via `metadataCache.getFileCache` using `settings.frontmatter` keys;
     - skips if flag is unset, ignored, or assigned to a different preset id;
     - hashes the body; short-circuits to `unchanged` if id+hash match (no frontmatter write);
-    - if the preset enables canonical URL: HEAD-probes (unless globally skipped);
+    - if the preset links back to the note or sets canonical_url: probes the note URL (unless globally skipped);
     - builds the link map via `metadataCache.getFirstLinkpathDest` + frontmatter checks;
     - strips → YouTube → LINK blocks → images → wikilinks → marked (+footnotes) → HTML;
     - calls Ghost (update by id, else create as draft when newsletter+email opt-in, else published);
     - upgrades YouTube/link paragraphs to embed/bookmark cards;
     - transitions draft→published with newsletter slug if shouldEmail;
-    - writes ghost_id, synced_at, content_hash, preset id, emailed_at, published, date_published, date_updated.
+    - on update with canonical_url off: sends `canonical_url: null` when the post still holds the note URL;
+    - writes ghost_id, synced_at, content_hash, preset id, emailed_at, published, date_published, date_updated, and the post URL (`frontmatter.postUrl` set, post `published`, value changed).
 3. If the preset has `listingNoteEnabled` and a path: `regenerateListingNote(app, preset, refreshedQueue, settings.frontmatter)` — rewrites the listing body via `vault.modify`, then calls `processFrontMatter` to set the configured ignore flag on the listing note itself (the body write wipes any existing frontmatter, so the flag has to be re-established each run).
 4. Two-stage refresh of the panel: an immediate `refreshView()` plus a `window.setTimeout(refreshView, POST_SYNC_REFRESH_DELAY_MS)` follow-up so the metadataCache 'changed' events from each `processFrontMatter` write have time to propagate before the queue is re-read.
 
@@ -105,7 +106,7 @@ src/
 Globals (shared by all presets):
 
 - Ghost connection (URL, admin key secret name).
-- Notes base URL (for canonical URLs + wikilink resolution).
+- Notes base URL (link back to the note, canonical URLs, wikilink resolution).
 - Triage filters (excluded folders, MoC tag).
 - Content processing (strip sections, known URL map).
 - Frontmatter property names — single global set, since a note is in at most one preset's queue at a time.
@@ -116,7 +117,7 @@ Per preset:
 - Name, enabled, status (published/draft).
 - Tags (ordered) + visibility per tag.
 - Newsletter slug.
-- Canonical URL toggle.
+- Link back to the note toggle; canonical URL toggle (one flag up to 1.3.1; `sanitizePreset` migrates).
 - Listing note enabled + path.
 
 ## Tag / newsletter cache

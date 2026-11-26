@@ -59,6 +59,7 @@ interface Preset {
     tags: { name: string; visibility: 'public' | 'internal' }[] // ordered
     newsletterSlug: string
     ghostStatus: 'published' | 'draft'
+    linkBackToNoteEnabled: boolean // missing in saved data: copied from canonicalUrlEnabled
     canonicalUrlEnabled: boolean
     listingNoteEnabled: boolean
     listingNotePath: string
@@ -75,6 +76,7 @@ interface FrontmatterPropertyNames {
     contentHash: string
     emailedAt: string
     excerpt: string
+    postUrl: string // '' (default) = off
 }
 ```
 
@@ -85,4 +87,6 @@ interface FrontmatterPropertyNames {
 - `frontmatter` — neutral `ghost_publish_*` prefix. Configurable to match any existing vault convention.
 - `eligibility: ''` — empty so every markdown file qualifies until the user opts in to a gate.
 - `skipCanonicalProbe: false` — safer default.
+- `frontmatter.postUrl: ''` — off; writing a new property is opt-in.
+- New preset: `linkBackToNoteEnabled` and `canonicalUrlEnabled` are `false`.
 - `debugModeEnabled: false` — keeps the developer console quiet.

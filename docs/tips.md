@@ -54,7 +54,7 @@ Fill in Ghost URL and Admin API key in settings. The key is kept in Obsidian's s
 
 ### "canonical URL not reachable"
 
-Either your mirror hasn't finished publishing the note, the path contains a character that needs different encoding, or your Notes base URL is wrong. Compare the resolved URL (debug mode → developer console) to a working one.
+The preset links back to the note or sets canonical_url, so the plugin checks first that the note is live. Either your mirror hasn't finished publishing the note, the path contains a character that needs different encoding, or your Notes base URL is wrong. Compare the resolved URL (debug mode → developer console) to a working one.
 
 ### A post got recreated rather than updated
 

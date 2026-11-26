@@ -29,9 +29,9 @@ The key lives in Obsidian's **secret storage**, which stays on each device and i
 
 ## Public mirror (optional)
 
-| Setting            | Type | Default | Description                                                                                               |
-| ------------------ | ---- | ------- | --------------------------------------------------------------------------------------------------------- |
-| **Notes base URL** | text | `""`    | Public URL of a mirror that exposes your vault. Required for canonical_url presets + wikilink resolution. |
+| Setting            | Type | Default | Description                                                                                                                                        |
+| ------------------ | ---- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Notes base URL** | text | `""`    | Public URL of a mirror that exposes your vault. Required for presets that link back to the note or set canonical_url, and for wikilink resolution. |
 
 ## Triage
 
@@ -51,18 +51,21 @@ The key lives in Obsidian's **secret storage**, which stays on each device and i
 
 Customise the property names the plugin reads / writes. Defaults shown.
 
-| Property     | Default                      | Purpose                                                                  |
-| ------------ | ---------------------------- | ------------------------------------------------------------------------ |
-| Eligibility  | `""` (optional)              | Property a note must have set to `true` to appear as a triage candidate. |
-| Preset id    | `ghost_publish_preset`       | Stores which preset published the note.                                  |
-| Flag         | `ghost_publish`              | `true` once in a queue.                                                  |
-| Ignore flag  | `ghost_publish_ignore`       | `true` to permanently hide from triage.                                  |
-| Email flag   | `ghost_publish_email`        | `true` to opt into the preset's newsletter on first publish.             |
-| Synced at    | `ghost_publish_synced_at`    | Timestamp of the last sync that pushed changes.                          |
-| Ghost id     | `ghost_publish_id`           | Ghost post id; enables idempotent updates.                               |
-| Content hash | `ghost_publish_content_hash` | SHA-256 of the body; unchanged notes skip the round-trip.                |
-| Emailed at   | `ghost_publish_emailed_at`   | Set once on newsletter dispatch; never cleared.                          |
-| Excerpt      | `ghost_publish_excerpt`      | Optional. Overrides the auto-derived `custom_excerpt`.                   |
+| Property     | Default                      | Purpose                                                                        |
+| ------------ | ---------------------------- | ------------------------------------------------------------------------------ |
+| Eligibility  | `""` (optional)              | Property a note must have set to `true` to appear as a triage candidate.       |
+| Preset id    | `ghost_publish_preset`       | Stores which preset published the note.                                        |
+| Flag         | `ghost_publish`              | `true` once in a queue.                                                        |
+| Ignore flag  | `ghost_publish_ignore`       | `true` to permanently hide from triage.                                        |
+| Email flag   | `ghost_publish_email`        | `true` to opt into the preset's newsletter on first publish.                   |
+| Synced at    | `ghost_publish_synced_at`    | Timestamp of the last sync that pushed changes.                                |
+| Ghost id     | `ghost_publish_id`           | Ghost post id; enables idempotent updates.                                     |
+| Content hash | `ghost_publish_content_hash` | SHA-256 of the body; unchanged notes skip the round-trip.                      |
+| Emailed at   | `ghost_publish_emailed_at`   | Set once on newsletter dispatch; never cleared.                                |
+| Excerpt      | `ghost_publish_excerpt`      | Optional. Overrides the auto-derived `custom_excerpt`.                         |
+| Post URL     | `""` (off)                   | Optional. Receives the public address of the post after each create or update. |
+
+**Post URL** is off until you type a property name (for example `ghost_publish_url`). Then, after each sync that creates or updates a post, the plugin writes the address that Ghost gives for the published post into that property. It writes only when the address changed, so a note is not rewritten for nothing. A draft or a scheduled post has no public address yet: the plugin writes nothing for it. A note that did not change is not sent to Ghost, so it gets the property on its next change.
 
 ## Tags & newsletters cache
 
@@ -76,22 +79,27 @@ Refreshing is **manual only** — the plugin never auto-fetches.
 
 Each preset is edited via a modal:
 
-| Field                 | Description                                                                        |
-| --------------------- | ---------------------------------------------------------------------------------- |
-| **Name**              | Shown as the panel tab label.                                                      |
-| **Enabled**           | Disabled presets don't show as tabs.                                               |
-| **Status**            | `published` (default) or `draft`.                                                  |
-| **Tags**              | Ordered list. First tag is Ghost's primary tag. Autocomplete from the cached tags. |
-| **Newsletter**        | Picked from the dropdown of cached newsletters. Empty disables email opt-in.       |
-| **Canonical URL**     | Enable to set `canonical_url` + add a "Canonical version" callout.                 |
-| **Listing note**      | Maintain a vault note linking every post currently published under this preset.    |
-| **Listing note path** | Vault-relative path. Created with intermediate folders if missing.                 |
+| Field                                   | Description                                                                                                                         |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Name**                                | Shown as the panel tab label.                                                                                                       |
+| **Enabled**                             | Disabled presets don't show as tabs.                                                                                                |
+| **Status**                              | `published` (default) or `draft`.                                                                                                   |
+| **Tags**                                | Ordered list. First tag is Ghost's primary tag. Autocomplete from the cached tags.                                                  |
+| **Newsletter**                          | Picked from the dropdown of cached newsletters. Empty disables email opt-in.                                                        |
+| **Link back to the note**               | Start the post with a line that links to the note on your notes site.                                                               |
+| **Point the canonical URL to the note** | Set the post's `canonical_url` to the note on your notes site: the note is the original. Turn it off to make the post the original. |
+| **Listing note**                        | Maintain a vault note linking every post currently published under this preset.                                                     |
+| **Listing note path**                   | Vault-relative path. Created with intermediate folders if missing.                                                                  |
+
+Both link settings need the **Notes base URL** setting. Presets saved by version 1.3.1 or earlier had one **Canonical URL** switch for both: such a preset gets both settings on (or both off), so it works as before.
+
+When **Point the canonical URL to the note** is off and a post still has the `canonical_url` that the plugin set earlier, the next update of the post clears it. A `canonical_url` that you set by hand in Ghost to another address is kept.
 
 Reorder presets in the list using the up / down arrows. The eye icon toggles enabled / disabled without deleting the preset.
 
 ## Advanced
 
-| Setting                      | Type   | Default | Description                                             |
-| ---------------------------- | ------ | ------- | ------------------------------------------------------- |
-| **Skip canonical-URL probe** | toggle | `false` | Push without verifying the canonical URL is live first. |
-| **Debug mode**               | toggle | `false` | Verbose logging in the developer console.               |
+| Setting                      | Type   | Default | Description                                                                                                                                       |
+| ---------------------------- | ------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Skip canonical-URL probe** | toggle | `false` | Push without checking first that the note is live on your notes site (the check runs when a preset links back to the note or sets canonical_url). |
+| **Debug mode**               | toggle | `false` | Verbose logging in the developer console.                                                                                                         |

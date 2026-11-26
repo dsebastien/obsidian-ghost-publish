@@ -1,6 +1,6 @@
 # Ghost Publish
 
-Publish your vault notes to a [Ghost](https://ghost.org) blog with configurable presets. Each preset captures a publication target — tags, newsletter, canonical-URL strategy, status — and shows up as a tab in the side panel.
+Publish your vault notes to a [Ghost](https://ghost.org) blog with configurable presets. Each preset captures a publication target — tags, newsletter, link back to the note, canonical URL, status — and shows up as a tab in the side panel.
 
 ## Features
 
@@ -49,7 +49,7 @@ This plugin is desktop-only and makes network requests **only to the Ghost site 
 External services used:
 
 - **Ghost Admin API** at your configured Ghost URL — for creating / updating posts, fetching tags & newsletters, uploading embedded images, and triggering optional newsletter dispatches. Authentication uses an Admin API key you provide (kept in Obsidian's device-local secret storage, or read from the `GHOST_ADMIN_KEY` environment variable).
-- **Public mirror URL** (optional, per preset) — when a preset enables `canonical_url`, the plugin performs a HEAD/GET probe against the canonical URL to verify the public version is reachable before publishing. No vault content is sent in this probe.
+- **Public mirror URL** (optional, per preset) — when a preset links back to the note or sets `canonical_url`, the plugin performs a HEAD/GET probe against the note's URL to verify the public version is reachable before publishing. No vault content is sent in this probe.
 
 The plugin never executes remote code and updates only through normal Obsidian releases.
 

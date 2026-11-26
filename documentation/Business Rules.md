@@ -35,7 +35,9 @@ This document defines the core business rules. These MUST be respected unless ex
 - **BR-SYNC-3**: Newsletter dispatch fires **exactly once per note** — the first sync where the preset has a newsletter AND the email flag is set AND `emailedAt` is unset. `emailedAt` is never cleared by the plugin.
 - **BR-SYNC-4**: `date_published` is set once (never overwritten); `date_updated` and `syncedAt` refresh on every successful sync that pushes to Ghost. An `unchanged` short-circuit writes nothing to the note.
 - **BR-SYNC-5**: A failed sync of one note must not block subsequent notes. The orchestrator captures the error into a `SyncResult` of status `failed`.
-- **BR-SYNC-6**: The canonical-URL probe is opt-in **per preset** (`canonicalUrlEnabled`). When opted in, it can be globally bypassed via the `skipCanonicalProbe` setting.
+- **BR-SYNC-6**: The canonical-URL probe is opt-in **per preset**: it runs when the preset links back to the note (`linkBackToNoteEnabled`) or sets `canonical_url` (`canonicalUrlEnabled`). It can be globally bypassed via the `skipCanonicalProbe` setting.
+- **BR-SYNC-7**: The link back to the note and `canonical_url` are separate per-preset settings. A preset saved before the split takes both from `canonicalUrlEnabled`, so existing users see no change. With `canonical_url` off, an update sends `canonical_url: null` only when the post's current value equals the note URL (set by this plugin); a value set by hand is kept.
+- **BR-SYNC-8**: The post URL property (`frontmatter.postUrl`) is off when empty (default). After a create or update it receives the URL Ghost returns, only for a `published` post (drafts and scheduled posts carry a `/p/<uuid>/` preview URL) and only when the value changed. Reason: no needless note rewrites (git noise).
 
 ## Content processing
 
